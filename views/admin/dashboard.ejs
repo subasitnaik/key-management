@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Master Admin</title>
+  <%- include('../partials/mobile-styles') %>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <a href="/panel/admin">Dashboard</a>
+      <a href="/panel/admin/sellers/new">New Seller</a>
+      <a href="/panel/admin/settings">Change Password</a>
+      <form action="/panel/admin/logout" method="post">
+        <button type="submit" class="btn">Logout</button>
+      </form>
+    </nav>
+    <h1>Master Admin</h1>
+    <div class="card">
+      <h2>Sellers</h2>
+      <% if (sellers && sellers.length) { %>
+        <% sellers.forEach(function(s) { %>
+        <div class="row-card">
+          <div class="value"><strong><%= s.username %></strong> · <%= s.slug %> <% if (s.suspended) { %><span class="label" style="color:#ef4444;">(Suspended)</span><% } %></div>
+          <div class="label">Credits: <%= s.credits_balance %> · CCPU: <%= s.ccpu %> · Bot: <%= s.telegram_bot_token ? 'Assigned' : 'Not assigned' %></div>
+          <div class="btn-group" style="margin-top:0.5rem;">
+            <a href="/panel/admin/sellers/<%= s.id %>/edit" class="btn">Edit / Assign Bot</a>
+            <a href="/panel/admin/sellers/<%= s.id %>/credits" class="btn">Credits</a>
+            <form method="post" action="/panel/admin/sellers/<%= s.id %>/suspend" style="display:inline;">
+              <input type="hidden" name="suspended" value="<%= s.suspended ? '0' : '1' %>">
+              <button type="submit" class="btn <%= s.suspended ? 'btn-success' : 'btn-danger' %>"><%= s.suspended ? 'Unsuspend' : 'Suspend' %></button>
+            </form>
+          </div>
+        </div>
+        <% }); %>
+      <% } else { %><p>No sellers yet</p><% } %>
+    </div>
+  </div>
+</body>
+</html>

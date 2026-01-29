@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Edit Seller: <%= seller.username %></title>
+  <%- include('../partials/mobile-styles') %>
+  <style>
+    .checkbox-wrap { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; }
+    .checkbox-wrap input { width: auto; min-height: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="nav">
+      <a href="/panel/admin">Dashboard</a>
+      <a href="/panel/admin/sellers/new">New Seller</a>
+      <a href="/panel/admin/settings">Change Password</a>
+      <form action="/panel/admin/logout" method="post">
+        <button type="submit" class="btn">Logout</button>
+      </form>
+    </nav>
+    <h1>Edit Seller: <%= seller.username %></h1>
+    <p class="label">Slug: <code><%= seller.slug %></code> · Connect URL: <code>/connect/<%= seller.slug %>/</code></p>
+    <% if (typeof saved !== 'undefined' && saved) { %><p class="success">Settings saved. Restart server for bot changes to take effect.</p><% } %>
+    <div class="card">
+      <form method="post" action="/panel/admin/sellers/<%= seller.id %>/edit">
+        <div class="form-group">
+          <label>Telegram Bot Token</label>
+          <input type="password" name="telegram_bot_token" value="" placeholder="<%= seller.telegram_bot_token ? 'Token is set - enter new to change' : '123456:ABC-DEF... (create via @BotFather)' %>" autocomplete="off">
+          <span class="label" style="font-size:0.75rem;">Only Master Admin assigns bots. Create via @BotFather, paste token here.</span>
+        </div>
+        <div class="form-group">
+          <label>Telegram Username (for payment notifications)</label>
+          <input type="text" name="telegram_username" value="<%= seller.telegram_username || '' %>" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label>CCPU (credits per 30-day month)</label>
+          <input type="number" name="ccpu" value="<%= seller.ccpu %>" min="1">
+        </div>
+        <div class="form-group checkbox-wrap">
+          <input type="checkbox" name="query_channel" value="1" id="qc" <%= seller.query_channel_enabled ? 'checked' : '' %>>
+          <label for="qc" style="margin:0;">Enable query channel</label>
+        </div>
+        <button type="submit" class="btn btn-block">Save</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

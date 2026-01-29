@@ -1,0 +1,20 @@
+{
+  "name": "automated-key-distribution-backend",
+  "version": "1.0.0",
+  "description": "Server-side compatibility layer for ALP tool auth",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.93.2",
+    "bcryptjs": "^3.0.3",
+    "cookie-session": "^2.1.0",
+    "dotenv": "^17.2.3",
+    "ejs": "^4.0.1",
+    "express": "^4.21.0",
+    "telegraf": "^4.16.3"
+  }
+}

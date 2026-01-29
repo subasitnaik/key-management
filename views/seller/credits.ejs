@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Credits</title>
+  <%- include('../partials/mobile-styles') %>
+</head>
+<body>
+  <div class="container">
+    <%- include('../partials/seller-nav') %>
+    <h1>Credits</h1>
+    <div class="card">
+      <div class="stats">
+        <div class="stat"><span class="val"><%= seller.credits_balance %></span><br><span class="lbl">Balance</span></div>
+        <div class="stat"><span class="val"><%= seller.ccpu %></span><br><span class="lbl">CCPU</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Ledger</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Date</th><th>Amount</th><th>Reason</th></tr>
+          <% ledger.forEach(function(l) { %>
+          <tr>
+            <td><%= l.created_at %></td>
+            <td><%= l.amount > 0 ? '+' : '' %><%= l.amount %></td>
+            <td><%= l.reason || '-' %></td>
+          </tr>
+          <% }); %>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

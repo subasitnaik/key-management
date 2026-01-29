@@ -1,0 +1,76 @@
+<header class="nav-header">
+  <button type="button" class="hamburger" id="navToggle" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <form action="/panel/seller/logout" method="post" class="logout-form">
+    <button type="submit" class="btn">Logout</button>
+  </form>
+  <nav class="nav" id="mainNav">
+    <a href="/panel/seller">Dashboard</a>
+    <a href="/panel/seller/credits">Credits</a>
+    <a href="/panel/seller/plans">Plans</a>
+    <a href="/panel/seller/keys">Keys</a>
+    <a href="/panel/seller/blocked">Blocked Users</a>
+  </nav>
+</header>
+<style>
+  .nav-header { position: relative; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #27272a; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    background: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hamburger span { display: block; width: 20px; height: 2px; background: #e4e4e7; transition: transform 0.2s, opacity 0.2s; }
+  .hamburger[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+  .hamburger[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .logout-form { margin-left: auto; }
+  .logout-form .btn { padding: 0.5rem 0.75rem; min-height: 44px; }
+  .nav { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .nav a { padding: 0.5rem 0.75rem; min-height: 44px; }
+  @media (max-width: 639px) {
+    .hamburger { display: flex; }
+    .nav {
+      display: none;
+      flex-direction: column;
+      flex: 1 1 100%;
+      order: 3;
+      margin-top: 0.5rem;
+      padding: 1rem;
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      z-index: 100;
+    }
+    .nav.open { display: flex; }
+    .nav a { width: 100%; text-align: center; }
+  }
+  @media (min-width: 640px) {
+    .hamburger { display: none; }
+    .nav { display: flex; gap: 0.75rem; }
+  }
+</style>
+<script>
+  (function() {
+    var toggle = document.getElementById('navToggle');
+    var nav = document.getElementById('mainNav');
+    if (toggle && nav) {
+      toggle.addEventListener('click', function() {
+        var open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+      });
+      nav.querySelectorAll('a').forEach(function(a) {
+        a.addEventListener('click', function() { nav.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); });
+      });
+    }
+  })();
+</script>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Blocked Users</title>
+  <%- include('../partials/mobile-styles') %>
+</head>
+<body>
+  <div class="container">
+    <%- include('../partials/seller-nav') %>
+    <h1>Blocked Users</h1>
+    <% if (typeof unblocked !== 'undefined' && unblocked) { %><p class="success">User unblocked</p><% } %>
+    <p class="label">Blocked users cannot use the bot until unblocked. They are auto-unblocked on cycle reset.</p>
+    <div class="card">
+      <% if (blocked && blocked.length) { %>
+        <% blocked.forEach(function(b) { %>
+        <div class="row-card">
+          <div class="value"><strong>@<%= b.telegram_username || b.telegram_user_id %></strong></div>
+          <div class="label">Blocked: <%= b.blocked_at %></div>
+          <form method="post" action="/panel/seller/blocked/<%= b.user_id %>/unblock" style="margin-top:0.5rem;">
+            <button type="submit" class="btn btn-success">Unblock</button>
+          </form>
+        </div>
+        <% }); %>
+      <% } else { %><p>No blocked users</p><% } %>
+    </div>
+  </div>
+</body>
+</html>

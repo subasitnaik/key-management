@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Plans</title>
+  <%- include('../partials/mobile-styles') %>
+  <style>
+    .form-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+    .form-row .form-group { flex: 1 1 100px; min-width: 0; }
+    .form-row .form-group:last-child { flex: 1 1 100%; }
+    @media (min-width: 400px) { .form-row .form-group:last-child { flex: 0 0 auto; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <%- include('../partials/seller-nav') %>
+    <h1>Plans</h1>
+    <% if (typeof err !== 'undefined' && err === 'missing') { %><p class="error">Fill all fields</p><% } %>
+    <% if (typeof updated !== 'undefined' && updated) { %><p class="success">Plan updated</p><% } %>
+    <% if (typeof deleted !== 'undefined' && deleted) { %><p class="success">Plan deleted</p><% } %>
+    <% if (typeof err !== 'undefined' && err === 'inuse') { %><p class="error">Cannot delete: plan is used by payment requests</p><% } %>
+    <div class="card">
+      <h2>Add Plan</h2>
+      <form method="post" action="/panel/seller/plans">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" placeholder="7 Days" required>
+          </div>
+          <div class="form-group">
+            <label>Days</label>
+            <input type="number" name="days" placeholder="7" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" name="price" placeholder="50" min="0" step="0.01" required>
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end;">
+            <button type="submit" class="btn btn-block">Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Current Plans</h2>
+      <% if (plans && plans.length) { %>
+        <% plans.forEach(function(p) { %>
+        <div class="row-card">
+          <div class="value"><strong><%= p.name %></strong> · <%= p.days %> days</div>
+          <div class="label">₹<%= p.price %></div>
+          <div class="btn-group">
+            <a href="/panel/seller/plans/<%= p.id %>/edit" class="btn">Edit</a>
+            <form action="/panel/seller/plans/<%= p.id %>/delete" method="post" style="display:inline;">
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Delete this plan?');">Delete</button>
+            </form>
+          </div>
+        </div>
+        <% }); %>
+      <% } else { %><p>No plans yet</p><% } %>
+    </div>
+  </div>
+</body>
+</html>
