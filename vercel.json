@@ -5,7 +5,7 @@
     {
       "src": "api/index.js",
       "use": "@vercel/node",
-      "config": { "includeFiles": ["views/**", "app.js"] }
+      "config": { "includeFiles": ["views/**", "public/**", "app.js"] }
     }
   ],
   "rewrites": [

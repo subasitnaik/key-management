@@ -1,16 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sellers</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Sellers</h1>
-  <p><a href="/panel/admin">Back</a> | <a href="/panel/admin/sellers/new">New Seller</a></p>
-  <ul>
-    <% (sellers || []).forEach(function(s) { %>
-    <li><a href="/panel/admin/sellers/<%= s.id %>"><%= s.username %></a> (slug: <%= s.slug %>, credits: <%= s.credits_balance %>)</li>
-    <% }); %>
-  </ul>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/admin">Dashboard</a>
+      <a href="/panel/admin/sellers">Sellers</a>
+      <a href="/panel/admin/settings">Settings</a>
+      <a href="/panel/admin/logout">Logout</a>
+    </nav>
+    <h1>Sellers</h1>
+    <p><a href="/panel/admin/sellers/new" class="btn">New Seller</a></p>
+    <div class="card">
+      <ul class="list">
+        <% (sellers || []).forEach(function(s) { %>
+        <li>
+          <span><a href="/panel/admin/sellers/<%= s.id %>"><%= s.username %></a> — slug: <span class="badge"><%= s.slug %></span> — credits: <%= s.credits_balance %></span>
+        </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
 </body>
 </html>

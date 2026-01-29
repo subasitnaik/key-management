@@ -1,20 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Payment Requests</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Pending Payment Requests</h1>
-  <p><a href="/panel/seller">Back</a></p>
-  <ul>
-    <% (pending || []).forEach(function(pr) { %>
-    <li>ID <%= pr.id %> — Plan <%= pr.plan_id %> — UTR <%= pr.utr %> — Attempts <%= pr.attempts %>
-      <form method="post" action="/api/payment/accept/<%= pr.id %>" style="display:inline"><button type="submit">Accept</button></form>
-      <form method="post" action="/api/payment/reject/<%= pr.id %>" style="display:inline"><button type="submit">Reject</button></form>
-      <form method="post" action="/api/payment/block/<%= pr.id %>" style="display:inline"><button type="submit">Block</button></form>
-    </li>
-    <% }); %>
-  </ul>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/logout">Logout</a>
+    </nav>
+    <h1>Pending Payment Requests</h1>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back</a></p>
+    <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-error">Something went wrong.</div><% } %>
+    <div class="card">
+      <ul class="list">
+        <% (pending || []).forEach(function(pr) { %>
+        <li>
+          <span>ID <%= pr.id %> — Plan <%= pr.plan_id %> — UTR <%= pr.utr %> — Attempts <%= pr.attempts %></span>
+          <div class="actions">
+            <form method="post" action="/api/payment/accept/<%= pr.id %>"><button type="submit" class="btn">Accept</button></form>
+            <form method="post" action="/api/payment/reject/<%= pr.id %>"><button type="submit" class="btn btn-secondary">Reject</button></form>
+            <form method="post" action="/api/payment/block/<%= pr.id %>"><button type="submit" class="btn btn-danger">Block</button></form>
+          </div>
+        </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
 </body>
 </html>

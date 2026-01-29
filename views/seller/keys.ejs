@@ -1,16 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Keys</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Keys / Subscriptions</h1>
-  <p><a href="/panel/seller">Back</a></p>
-  <ul>
-    <% (subscriptions || []).forEach(function(s) { %>
-    <li>Key: <%= s.key %> — expires <%= s.expires_at %></li>
-    <% }); %>
-  </ul>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/logout">Logout</a>
+    </nav>
+    <h1>Keys / Subscriptions</h1>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back</a></p>
+    <div class="card">
+      <ul class="list">
+        <% (subscriptions || []).forEach(function(s) { %>
+        <li>
+          <span>Key: <code class="badge"><%= s.key %></code> — expires <%= s.expires_at %></span>
+        </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
 </body>
 </html>

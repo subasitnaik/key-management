@@ -1,25 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= seller ? 'Edit Seller' : 'New Seller' %></title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1><%= seller ? 'Edit Seller' : 'New Seller' %></h1>
-  <p><a href="/panel/admin/sellers">Back</a></p>
-  <form method="post" action="<%= seller ? '/panel/admin/sellers/' + seller.id : '/panel/admin/sellers' %>">
-    <% if (!seller) { %>
-    <label>Slug: <input name="slug" type="text" required></label><br>
-    <label>Password: <input name="password" type="password" required></label><br>
-    <% } %>
-    <label>Username: <input name="username" type="text" value="<%= seller ? (seller.username || '') : '' %>" required></label><br>
-    <label>CCPU: <input name="ccpu" type="number" value="<%= seller ? (seller.ccpu || 30) : 30 %>"></label><br>
-    <label>Telegram username: <input name="telegram_username" type="text" value="<%= seller ? (seller.telegram_username || '') : '' %>" placeholder="@username"></label><br>
-    <label>Telegram bot token: <input name="telegram_bot_token" type="text" value="<%= seller ? (seller.telegram_bot_token || '') : '' %>" placeholder="optional"></label><br>
-    <label>Query channel: <input name="query_channel_enabled" type="checkbox" <%= seller && seller.query_channel_enabled ? 'checked' : '' %>></label><br>
-    <label>Query group link: <input name="query_group_link" type="text" value="<%= seller ? (seller.query_group_link || '') : '' %>"></label><br>
-    <label>Private group link: <input name="private_group_link" type="text" value="<%= seller ? (seller.private_group_link || '') : '' %>"></label><br>
-    <button type="submit">Save</button>
-  </form>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/admin">Dashboard</a>
+      <a href="/panel/admin/sellers">Sellers</a>
+      <a href="/panel/admin/settings">Settings</a>
+      <a href="/panel/admin/logout">Logout</a>
+    </nav>
+    <h1><%= seller ? 'Edit Seller' : 'New Seller' %></h1>
+    <p><a href="/panel/admin/sellers" class="btn btn-secondary">Back</a></p>
+    <div class="card">
+      <form method="post" action="<%= seller ? '/panel/admin/sellers/' + seller.id : '/panel/admin/sellers' %>">
+        <% if (!seller) { %>
+        <div class="form-group">
+          <label>Slug</label>
+          <input name="slug" type="text" required placeholder="e.g. test">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input name="password" type="password" required>
+        </div>
+        <% } %>
+        <div class="form-group">
+          <label>Username</label>
+          <input name="username" type="text" value="<%= seller ? (seller.username || '') : '' %>" required>
+        </div>
+        <div class="form-group">
+          <label>CCPU</label>
+          <input name="ccpu" type="number" value="<%= seller ? (seller.ccpu || 30) : 30 %>" min="1">
+        </div>
+        <div class="form-group">
+          <label>Telegram username</label>
+          <input name="telegram_username" type="text" value="<%= seller ? (seller.telegram_username || '') : '' %>" placeholder="@username">
+        </div>
+        <div class="form-group">
+          <label>Telegram bot token</label>
+          <input name="telegram_bot_token" type="text" value="<%= seller ? (seller.telegram_bot_token || '') : '' %>" placeholder="optional">
+        </div>
+        <div class="form-group">
+          <label><input name="query_channel_enabled" type="checkbox" <%= seller && seller.query_channel_enabled ? 'checked' : '' %>> Query channel enabled</label>
+        </div>
+        <div class="form-group">
+          <label>Query group link</label>
+          <input name="query_group_link" type="text" value="<%= seller ? (seller.query_group_link || '') : '' %>">
+        </div>
+        <div class="form-group">
+          <label>Private group link</label>
+          <input name="private_group_link" type="text" value="<%= seller ? (seller.private_group_link || '') : '' %>">
+        </div>
+        <button type="submit" class="btn">Save</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

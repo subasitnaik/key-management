@@ -1,11 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Master Admin</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Master Admin</h1>
-  <p><a href="/panel/admin/settings">Settings</a> | <a href="/panel/admin/sellers">Sellers</a> | <a href="/panel/admin/logout">Logout</a></p>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/admin">Dashboard</a>
+      <a href="/panel/admin/sellers">Sellers</a>
+      <a href="/panel/admin/settings">Settings</a>
+      <a href="/panel/admin/logout">Logout</a>
+    </nav>
+    <h1>Master Admin</h1>
+    <div class="card">
+      <p>Welcome. Use the links above to manage sellers, credits, and settings.</p>
+    </div>
+  </div>
 </body>
 </html>

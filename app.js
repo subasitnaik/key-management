@@ -6,7 +6,7 @@ import express from 'express';
 import cookieSession from 'cookie-session';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { initDb } from './src/db/index.js';
 import connectRouter from './src/connect/connectRouter.js';
 import sellerPanel from './src/routes/sellerPanel.js';
@@ -23,6 +23,13 @@ export function createApp() {
   app.set('trust proxy', 1);
 
   app.get('/health', (req, res) => res.json({ ok: true }));
+
+  const publicDir = join(__dirname, 'public');
+  app.get('/styles.css', (req, res) => {
+    const file = join(publicDir, 'styles.css');
+    if (!existsSync(file)) return res.status(404).end();
+    res.type('text/css').send(readFileSync(file, 'utf8'));
+  });
 
   app.use((req, res, next) => {
     const url = (process.env.SUPABASE_URL || '').trim();

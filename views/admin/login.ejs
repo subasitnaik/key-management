@@ -1,16 +1,28 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Master Admin Login</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Master Admin Login</h1>
-  <% if (typeof error !== 'undefined' && error) { %><p style="color:red"><%= error %></p><% } %>
-  <form method="post" action="/panel/admin/login">
-    <label>Username: <input name="username" type="text" required></label><br>
-    <label>Password: <input name="password" type="password" required></label><br>
-    <button type="submit">Login</button>
-  </form>
+  <div class="page login-box">
+    <h1>Master Admin Login</h1>
+    <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <div class="card">
+      <form method="post" action="/panel/admin/login">
+        <div class="form-group">
+          <label>Username</label>
+          <input name="username" type="text" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input name="password" type="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

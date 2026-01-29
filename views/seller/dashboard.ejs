@@ -1,12 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Seller Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <h1>Seller Dashboard</h1>
-  <p>Credits: <%= creditsBalance %></p>
-  <p><a href="/panel/seller/keys">Keys</a> | <a href="/panel/seller/plans">Plans</a> | <a href="/panel/seller/payments">Payments</a> | <a href="/panel/seller/logout">Logout</a></p>
+  <div class="page">
+    <nav class="nav">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/logout">Logout</a>
+    </nav>
+    <h1>Seller Dashboard</h1>
+    <div class="card">
+      <p><strong>Credits:</strong> <%= creditsBalance %></p>
+    </div>
+    <div class="card">
+      <form method="post" action="/panel/seller/maintenance">
+        <button type="submit" class="btn btn-secondary">Toggle Maintenance Mode</button>
+      </form>
+      <form method="post" action="/panel/seller/reset" style="margin-top:0.5rem;" onsubmit="return confirm('Reset all subscriptions for this seller? This cannot be undone.');">
+        <button type="submit" class="btn btn-danger">Reset Cycle</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
