@@ -58,6 +58,7 @@ router.get('/', requireSeller, async (req, res) => {
     connectLink: connectLink || '',
     slug: seller?.slug || '',
     usedPanelUrl,
+    maintenanceMode: !!(seller?.maintenance_mode),
   });
 });
 

@@ -93,11 +93,21 @@
       })();
     </script>
     <div class="card">
-      <form method="post" action="/panel/seller">
-        <input type="hidden" name="_action" value="maintenance" />
-        <button type="submit" class="btn btn-secondary">Toggle Maintenance Mode</button>
-      </form>
-      <form method="post" action="/panel/seller" style="margin-top:0.5rem;" onsubmit="return confirm('Reset all subscriptions for this seller? This cannot be undone.');">
+      <div class="maintenance-row">
+        <span class="maintenance-label">Maintenance mode</span>
+        <form method="post" action="/panel/seller" class="maintenance-form">
+          <input type="hidden" name="_action" value="maintenance" />
+          <% const maintenanceOn = typeof maintenanceMode !== 'undefined' && maintenanceMode; %>
+          <div class="toggle-wrap">
+            <span class="toggle-text toggle-off<%= maintenanceOn ? '' : ' active' %>">Off</span>
+            <button type="submit" class="toggle-slider<%= maintenanceOn ? ' is-on' : '' %>" role="switch" aria-checked="<%= maintenanceOn ? 'true' : 'false' %>" aria-label="Maintenance mode">
+              <span class="toggle-thumb"></span>
+            </button>
+            <span class="toggle-text toggle-on<%= maintenanceOn ? ' active' : '' %>">On</span>
+          </div>
+        </form>
+      </div>
+      <form method="post" action="/panel/seller" class="reset-form" onsubmit="return confirm('Reset all subscriptions for this seller? This cannot be undone.');">
         <input type="hidden" name="_action" value="reset" />
         <button type="submit" class="btn btn-danger">Reset Cycle</button>
       </form>

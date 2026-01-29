@@ -380,6 +380,78 @@ h1 {
   font-size: 0.8rem;
 }
 
+/* Maintenance mode toggle */
+.maintenance-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+.maintenance-label {
+  font-weight: 600;
+  color: var(--text);
+}
+.maintenance-form {
+  display: inline-block;
+}
+.toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.toggle-text {
+  font-size: 0.9rem;
+  color: var(--muted);
+  min-width: 1.8rem;
+  text-align: center;
+}
+.toggle-text.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+.toggle-slider {
+  position: relative;
+  width: 3.25rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-alt);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.toggle-slider:hover {
+  border-color: var(--border-bright);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+.toggle-slider:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.5rem - 4px);
+  height: calc(1.5rem - 4px);
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-slider.is-on .toggle-thumb {
+  transform: translateX(1.75rem);
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.toggle-slider:not(.is-on) .toggle-thumb {
+  transform: translateX(0);
+}
+.reset-form {
+  margin-top: 0.75rem;
+}
+
 .alert {
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
