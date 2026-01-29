@@ -1,31 +1,62 @@
-/* Key Distribution Panel – shared styles */
+/* Key Distribution Panel – hacker / terminal theme */
 :root {
-  --bg: #0f0f12;
-  --surface: #1a1a1f;
-  --border: #2a2a32;
-  --text: #e8e8ed;
-  --muted: #8b8b9a;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --success: #22c55e;
-  --danger: #ef4444;
-  --radius: 8px;
+  --bg: #0a0a0a;
+  --surface: #0d0d0d;
+  --surface-alt: #111;
+  --border: #1a2f1a;
+  --border-bright: #00ff41;
+  --text: #c8ffc8;
+  --text-dim: #7acc7a;
+  --muted: #4d804d;
+  --accent: #00ff41;
+  --accent-dim: #00cc33;
+  --accent-glow: rgba(0, 255, 65, 0.4);
+  --success: #00ff41;
+  --danger: #ff3333;
+  --danger-glow: rgba(255, 51, 51, 0.3);
+  --radius: 2px;
+  --font-mono: "Consolas", "Monaco", "Courier New", monospace;
 }
 
 * { box-sizing: border-box; }
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-mono);
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.6;
   min-height: 100vh;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
 }
 
 .page {
   max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .nav {
@@ -36,17 +67,28 @@ body {
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
   margin-bottom: 1.5rem;
+  border-image: linear-gradient(90deg, var(--accent), transparent, var(--accent)) 1;
 }
 .nav a {
   color: var(--muted);
   text-decoration: none;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
 }
-.nav a:hover { color: var(--accent); }
+.nav a:hover {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
 
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 1rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 12px var(--accent-glow);
 }
 
 .card {
@@ -55,6 +97,11 @@ h1 {
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-bottom: 1rem;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.03), inset 0 1px 0 rgba(0, 255, 65, 0.05);
+}
+.card:hover {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 24px var(--accent-glow);
 }
 
 .form-group {
@@ -63,8 +110,10 @@ h1 {
 .form-group label {
   display: block;
   margin-bottom: 0.35rem;
-  color: var(--muted);
-  font-size: 0.875rem;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 .form-group input,
 .form-group select,
@@ -75,41 +124,67 @@ h1 {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
-  font-size: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
 }
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .btn {
   display: inline-block;
   padding: 0.6rem 1.25rem;
-  background: var(--accent);
-  color: #fff;
-  border: none;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: var(--radius);
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: box-shadow 0.2s, background 0.2s;
 }
-.btn:hover { background: var(--accent-hover); }
+.btn:hover {
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
 .btn-secondary {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border-color: var(--border);
+  color: var(--text-dim);
 }
-.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-.btn-danger { background: var(--danger); }
-.btn-danger:hover { background: #dc2626; }
+.btn-secondary:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-danger:hover {
+  background: rgba(255, 51, 51, 0.1);
+  box-shadow: 0 0 16px var(--danger-glow);
+}
 
 .alert {
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
   margin-bottom: 1rem;
+  font-family: var(--font-mono);
 }
-.alert-error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid var(--danger); }
+.alert-error {
+  background: rgba(255, 51, 51, 0.08);
+  color: #ff6666;
+  border: 1px solid var(--danger);
+  box-shadow: 0 0 12px var(--danger-glow);
+}
 
 .list {
   list-style: none;
@@ -126,8 +201,16 @@ h1 {
   gap: 0.5rem;
 }
 .list li:last-child { border-bottom: none; }
-.list a { color: var(--accent); text-decoration: none; }
-.list a:hover { text-decoration: underline; }
+.list li:hover {
+  background: rgba(0, 255, 65, 0.03);
+}
+.list a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.list a:hover {
+  text-shadow: 0 0 8px var(--accent-glow);
+}
 
 .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .actions form { display: inline; }
@@ -136,19 +219,31 @@ h1 {
   display: inline-block;
   padding: 0.2rem 0.5rem;
   font-size: 0.75rem;
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--muted);
+  border-radius: var(--radius);
+  background: var(--surface-alt);
+  color: var(--accent-dim);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+code {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 0.9em;
 }
 
 .login-box {
   max-width: 360px;
   margin: 3rem auto;
 }
-.login-box h1 { text-align: center; margin-bottom: 1.5rem; }
+.login-box h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
 
 .redirect-msg {
   text-align: center;
   padding: 3rem 1rem;
   color: var(--muted);
+  font-style: italic;
 }
