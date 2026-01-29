@@ -195,6 +195,13 @@ h1 {
   border-color: var(--accent-dim);
   box-shadow: 0 0 24px var(--accent-glow);
 }
+.card h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
 .card.error-msg {
   border-color: var(--danger);
   color: var(--danger);
@@ -268,6 +275,33 @@ h1 {
 .btn-danger:hover {
   background: rgba(255, 51, 51, 0.1);
   box-shadow: 0 0 16px var(--danger-glow);
+}
+.btn-small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.success-msg {
+  border-color: var(--success);
+  color: var(--success);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.error-msg-inline {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+.form-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+.form-inline .form-group { margin-bottom: 0; }
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .alert {

@@ -17,8 +17,10 @@ export async function updateSeller(id, updates) {
   return data;
 }
 
-export async function getAllSellers() {
-  const { data, error } = await getSupabase().from('sellers').select('*').order('id');
+export async function getAllSellers(includeSuspended = false) {
+  let q = getSupabase().from('sellers').select('*').order('id');
+  if (!includeSuspended) q = q.eq('suspended', 0);
+  const { data, error } = await q;
   if (error) throw error;
   return data || [];
 }

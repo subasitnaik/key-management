@@ -41,7 +41,11 @@ router.get('/', requireMasterAdmin, async (req, res) => {
 
 router.get('/sellers', requireMasterAdmin, async (req, res) => {
   const sellers = await getAllSellers();
-  res.render('admin/sellers', { sellers: sellers || [] });
+  res.render('admin/sellers', {
+    sellers: sellers || [],
+    created: req.query.created === '1',
+    deleted: req.query.deleted === '1',
+  });
 });
 
 router.get('/sellers/new', requireMasterAdmin, (req, res) => {
@@ -86,7 +90,11 @@ router.post('/sellers', requireMasterAdmin, async (req, res) => {
 router.get('/sellers/:id', requireMasterAdmin, async (req, res) => {
   const seller = await getSellerById(parseInt(req.params.id, 10));
   if (!seller) return res.redirect('/panel/admin/sellers');
-  res.render('admin/seller-form', { seller });
+  res.render('admin/seller-form', {
+    seller,
+    creditsSuccess: req.query.credits === '1',
+    creditsError: req.query.error === 'amount',
+  });
 });
 
 router.post('/sellers/:id', requireMasterAdmin, async (req, res) => {
@@ -111,13 +119,21 @@ router.post('/sellers/:id/credits', requireMasterAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { amount, reason } = req.body || {};
   const delta = parseInt(amount, 10);
-  if (!delta) return res.redirect('/panel/admin/sellers?error=amount');
+  if (!delta || isNaN(delta)) return res.redirect(303, '/panel/admin/sellers/' + id + '?error=amount');
   const seller = await getSellerById(id);
-  if (!seller) return res.redirect('/panel/admin/sellers');
+  if (!seller) return res.redirect(303, '/panel/admin/sellers');
   await addLedgerEntry(id, delta, reason || 'Manual adjustment', req.session?.masterAdminId);
   const newBalance = (seller.credits_balance || 0) + delta;
   await updateSeller(id, { credits_balance: Math.max(0, newBalance) });
-  res.redirect('/panel/admin/sellers');
+  return res.redirect(303, '/panel/admin/sellers/' + id + '?credits=1');
+});
+
+router.post('/sellers/:id/delete', requireMasterAdmin, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const seller = await getSellerById(id);
+  if (!seller) return res.redirect(303, '/panel/admin/sellers');
+  await updateSeller(id, { suspended: 1 });
+  return res.redirect(303, '/panel/admin/sellers?deleted=1');
 });
 
 export default router;

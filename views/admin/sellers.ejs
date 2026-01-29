@@ -21,11 +21,21 @@
   <div class="page">
     <h1>Sellers</h1>
     <p><a href="/panel/admin/sellers/new" class="btn">New Seller</a></p>
+    <% if (typeof created !== 'undefined' && created) { %>
+    <div class="card success-msg">Seller created.</div>
+    <% } %>
+    <% if (typeof deleted !== 'undefined' && deleted) { %>
+    <div class="card success-msg">Seller deleted (suspended).</div>
+    <% } %>
     <div class="card">
-      <ul class="list">
+      <ul class="list seller-list">
         <% (sellers || []).forEach(function(s) { %>
-        <li>
-          <span><a href="/panel/admin/sellers/<%= s.id %>"><%= s.username %></a> — slug: <span class="badge"><%= s.slug %></span> — credits: <%= s.credits_balance %></span>
+        <li class="seller-row">
+          <span><a href="/panel/admin/sellers/<%= s.id %>"><%= s.username %></a> — slug: <span class="badge"><%= s.slug %></span> — credits: <strong><%= s.credits_balance ?? 0 %></strong></span>
+          <span class="row-actions">
+            <a href="/panel/admin/sellers/<%= s.id %>#credits" class="btn btn-small">Adjust credits</a>
+            <a href="/panel/admin/sellers/<%= s.id %>" class="btn btn-small btn-secondary">Edit</a>
+          </span>
         </li>
         <% }); %>
       </ul>
