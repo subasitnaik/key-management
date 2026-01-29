@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect key tester</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 480px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #0a0a0a;
+      color: #c8ffc8;
+    }
+    h1 { font-size: 1.25rem; color: #00ff41; }
+    label { display: block; margin-top: 1rem; font-size: 0.9rem; }
+    input[type="text"], input[type="url"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      background: #111;
+      border: 1px solid #1a2f1a;
+      color: #c8ffc8;
+      font-family: monospace;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.25rem;
+      background: transparent;
+      color: #00ff41;
+      border: 1px solid #00ff41;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover { background: rgba(0,255,65,0.1); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: monospace;
+      min-height: 3rem;
+    }
+    #result.success { background: rgba(0,255,65,0.15); border: 1px solid #00ff41; color: #00ff41; }
+    #result.error { background: rgba(255,51,51,0.15); border: 1px solid #ff3333; color: #ff6666; }
+    #result.neutral { background: #111; border: 1px solid #333; }
+    .hint { font-size: 0.8rem; color: #7acc7a; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Connect key tester</h1>
+  <p class="hint">Paste your connect link and a key to test if it works (same as the Android tool).</p>
+
+  <label for="url">Connect link (full URL)</label>
+  <input type="url" id="url" placeholder="https://your-app.vercel.app/connect/your-slug" autocomplete="off">
+
+  <label for="key">Key</label>
+  <input type="text" id="key" placeholder="Paste or type key" autocomplete="off">
+
+  <button type="button" id="btn">Validate key</button>
+
+  <div id="result" class="neutral" aria-live="polite"></div>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const keyInput = document.getElementById('key');
+    const btn = document.getElementById('btn');
+    const result = document.getElementById('result');
+
+    function setResult(msg, type) {
+      result.textContent = msg;
+      result.className = type;
+    }
+
+    btn.addEventListener('click', async () => {
+      const connectUrl = (urlInput.value || '').trim();
+      const key = (keyInput.value || '').trim();
+
+      if (!connectUrl) {
+        setResult('Enter your connect link (e.g. https://your-app.vercel.app/connect/subasit)', 'error');
+        return;
+      }
+      if (!key) {
+        setResult('Enter a key to validate.', 'error');
+        return;
+      }
+
+      setResult('Checking…', 'neutral');
+      btn.disabled = true;
+
+      try {
+        const body = new URLSearchParams({ key, uuid: 'tool-test-' + Date.now() });
+        const res = await fetch(connectUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+        const text = (await res.text()).trim();
+
+        if (text === 'loginisdone') {
+          setResult('Key accepted', 'success');
+        } else if (text === 'expired') {
+          setResult('Key rejected: expired', 'error');
+        } else if (text === 'notinlist') {
+          setResult('Key rejected: not valid (notinlist)', 'error');
+        } else if (text === 'maintenance') {
+          setResult('Key rejected: maintenance mode', 'error');
+        } else {
+          setResult('Key rejected: ' + (text || res.status), 'error');
+        }
+      } catch (err) {
+        setResult('Request failed: ' + (err.message || err), 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

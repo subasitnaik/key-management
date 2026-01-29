@@ -30,6 +30,11 @@ export function createApp() {
     if (!existsSync(file)) return res.status(404).end();
     res.type('text/css').send(readFileSync(file, 'utf8'));
   });
+  app.get('/tool-test', (req, res) => {
+    const file = join(publicDir, 'tool-test.html');
+    if (!existsSync(file)) return res.status(404).end();
+    res.type('text/html').send(readFileSync(file, 'utf8'));
+  });
 
   app.use((req, res, next) => {
     const url = (process.env.SUPABASE_URL || '').trim();
