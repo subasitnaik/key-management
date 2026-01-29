@@ -58,16 +58,26 @@ export async function getSubscriptionsBySeller(sellerId) {
   return data || [];
 }
 
-/** Count subscriptions that are not expired (active users) for this seller. */
+/** Count active subscriptions (not expired) for this seller, excluding manually generated keys (placeholder users). */
 export async function getActiveSubscriptionsCount(sellerId) {
+  const supabase = getSupabase();
   const now = new Date().toISOString();
-  const { count, error } = await getSupabase()
+  const { data: subs, error } = await supabase
     .from('subscriptions')
-    .select('*', { count: 'exact', head: true })
+    .select('user_id')
     .eq('seller_id', sellerId)
     .gt('expires_at', now);
   if (error) throw error;
-  return count ?? 0;
+  if (!subs?.length) return 0;
+  const userIds = [...new Set(subs.map((s) => s.user_id))];
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id')
+    .in('id', userIds)
+    .not('telegram_user_id', 'like', 'manual_%');
+  if (usersError) throw usersError;
+  const realUserIds = new Set((users || []).map((u) => u.id));
+  return subs.filter((s) => realUserIds.has(s.user_id)).length;
 }
 
 export async function createSubscription(row) {

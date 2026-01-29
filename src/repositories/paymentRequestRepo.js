@@ -23,7 +23,7 @@ export async function updatePaymentRequest(id, updates) {
   return data;
 }
 
-/** Sum of plan prices for all accepted payment requests (money earned this cycle). */
+/** Sum of plan prices for accepted payment requests only (auto-generated keys via bot; excludes manual keys). */
 export async function getEarnedAmountBySeller(sellerId) {
   const { data: requests, error } = await getSupabase()
     .from('payment_requests')
