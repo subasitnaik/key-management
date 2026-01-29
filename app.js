@@ -59,8 +59,21 @@ export function createApp() {
     })
   );
 
+  // Preserve Vercel-pre-parsed body so Express urlencoded doesn't overwrite with empty {}
+  app.use((req, res, next) => {
+    if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+      req._incomingBody = req.body;
+    }
+    next();
+  });
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
+  app.use((req, res, next) => {
+    if (req._incomingBody && (!req.body || Object.keys(req.body).length === 0)) {
+      req.body = req._incomingBody;
+    }
+    next();
+  });
 
   app.use('/connect', connectRouter);
   app.use('/connect/:sellerSlug', connectRouter);

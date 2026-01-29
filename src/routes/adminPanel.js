@@ -45,7 +45,11 @@ router.get('/sellers', requireMasterAdmin, async (req, res) => {
 });
 
 router.get('/sellers/new', requireMasterAdmin, (req, res) => {
-  res.render('admin/seller-form', { seller: null, error: req.query.error });
+  res.render('admin/seller-form', {
+    seller: null,
+    error: req.query.error,
+    errorMessage: req.query.error_msg ? decodeURIComponent(req.query.error_msg) : undefined,
+  });
 });
 
 router.post('/sellers', requireMasterAdmin, async (req, res) => {
@@ -74,7 +78,8 @@ router.post('/sellers', requireMasterAdmin, async (req, res) => {
     console.error('Create seller failed:', err?.message || err);
     const msg = (err?.message || '').toLowerCase();
     const code = msg.includes('unique') || msg.includes('duplicate') ? 'duplicate' : 'error';
-    return res.redirect(303, '/panel/admin/sellers/new?error=' + code);
+    const safeMsg = encodeURIComponent((err?.message || '').slice(0, 200));
+    return res.redirect(303, '/panel/admin/sellers/new?error=' + code + (safeMsg ? '&error_msg=' + safeMsg : ''));
   }
 });
 

@@ -195,6 +195,11 @@ h1 {
   border-color: var(--accent-dim);
   box-shadow: 0 0 24px var(--accent-glow);
 }
+.card.error-msg {
+  border-color: var(--danger);
+  color: var(--danger);
+  box-shadow: 0 0 16px var(--danger-glow);
+}
 
 .form-group {
   margin-bottom: 1rem;

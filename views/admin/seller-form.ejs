@@ -21,6 +21,13 @@
   <div class="page">
     <h1><%= seller ? 'Edit Seller' : 'New Seller' %></h1>
     <p><a href="/panel/admin/sellers" class="btn btn-secondary">Back</a></p>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="card error-msg" role="alert">
+      <% if (error === 'missing') { %>Please fill Slug, Username and Password.<% }
+         else if (error === 'duplicate') { %>Slug or Username already exists. Use different values.<% }
+         else { %>Could not save. <%= typeof errorMessage !== 'undefined' && errorMessage ? errorMessage : 'Check slug/username are unique and try again.' %><% } %>
+    </div>
+    <% } %>
     <div class="card">
       <form method="post" action="<%= seller ? '/panel/admin/sellers/' + seller.id : '/panel/admin/sellers' %>">
         <% if (!seller) { %>
