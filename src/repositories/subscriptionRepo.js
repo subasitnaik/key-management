@@ -58,6 +58,18 @@ export async function getSubscriptionsBySeller(sellerId) {
   return data || [];
 }
 
+/** Count subscriptions that are not expired (active users) for this seller. */
+export async function getActiveSubscriptionsCount(sellerId) {
+  const now = new Date().toISOString();
+  const { count, error } = await getSupabase()
+    .from('subscriptions')
+    .select('*', { count: 'exact', head: true })
+    .eq('seller_id', sellerId)
+    .gt('expires_at', now);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function createSubscription(row) {
   const { data, error } = await getSupabase().from('subscriptions').insert(row).select().single();
   if (error) throw error;

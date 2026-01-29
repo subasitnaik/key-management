@@ -5,9 +5,9 @@
 import { Router } from 'express';
 import { requireSeller } from '../middleware/auth.js';
 import { verifySeller, getSellerById, updateSeller } from '../repositories/sellerRepo.js';
-import { getSubscriptionsBySeller } from '../repositories/subscriptionRepo.js';
+import { getSubscriptionsBySeller, getActiveSubscriptionsCount } from '../repositories/subscriptionRepo.js';
 import { getPlansBySeller, getPlanById, createPlan, updatePlan, deletePlan } from '../repositories/planRepo.js';
-import { getPendingBySeller } from '../repositories/paymentRequestRepo.js';
+import { getPendingBySeller, getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
 import { getLedgerBySeller } from '../repositories/creditLedgerRepo.js';
 import { createSubscription, deleteSubscription } from '../repositories/subscriptionRepo.js';
 import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
@@ -35,8 +35,17 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/', requireSeller, async (req, res) => {
-  const seller = await getSellerById(req.session.sellerId);
-  res.render('seller/dashboard', { creditsBalance: seller?.credits_balance ?? 0 });
+  const sellerId = req.session.sellerId;
+  const seller = await getSellerById(sellerId);
+  const [activeUsers, earnedAmount] = await Promise.all([
+    getActiveSubscriptionsCount(sellerId),
+    getEarnedAmountBySeller(sellerId),
+  ]);
+  res.render('seller/dashboard', {
+    creditsBalance: seller?.credits_balance ?? 0,
+    activeUsers: activeUsers ?? 0,
+    earnedAmount: earnedAmount ?? 0,
+  });
 });
 
 function randomKey() {

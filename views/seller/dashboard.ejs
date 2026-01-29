@@ -23,6 +23,8 @@
     <h1>Seller Dashboard</h1>
     <div class="card">
       <p><strong>Credits:</strong> <%= creditsBalance %></p>
+      <p><strong>Active users:</strong> <%= typeof activeUsers !== 'undefined' ? activeUsers : 0 %> (keys not expired)</p>
+      <p><strong>Earned this cycle:</strong> ₹<%= typeof earnedAmount !== 'undefined' ? earnedAmount.toFixed(2) : '0.00' %></p>
     </div>
     <div class="card">
       <form method="post" action="/panel/seller/maintenance">
