@@ -29,11 +29,12 @@
     </div>
     <div class="card">
       <h2>Connect link (paste in your tool)</h2>
-      <% if (typeof connectLink !== 'undefined' && connectLink) { %>
+      <% const isUrl = typeof connectLink !== 'undefined' && connectLink && (connectLink.indexOf('http://') === 0 || connectLink.indexOf('https://') === 0); %>
+      <% if (isUrl) { %>
       <p><code class="badge connect-link"><%= connectLink %></code></p>
       <p class="text-dim">Copy this URL and paste it in your Android tool config so keys work.</p>
       <% } else { %>
-      <p class="text-dim">Connect link is set by master admin (PANEL_URL + your slug).</p>
+      <p class="text-dim">Your connect path: <code>/connect/<%= typeof slug !== 'undefined' ? slug : '' %></code>. Paste your site URL + this path in the tool (e.g. https://your-site.vercel.app/connect/<%= typeof slug !== 'undefined' ? slug : '' %>).</p>
       <% } %>
     </div>
     <div class="card">

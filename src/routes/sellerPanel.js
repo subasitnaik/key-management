@@ -41,7 +41,13 @@ router.get('/', requireSeller, async (req, res) => {
     getActiveSubscriptionsCount(sellerId),
     getEarnedAmountBySeller(sellerId),
   ]);
-  const baseUrl = (process.env.PANEL_URL || '').replace(/\/$/, '');
+  // Build connect URL: use PANEL_URL if it looks like a URL, else derive from request (so it works on Vercel without env)
+  let baseUrl = (process.env.PANEL_URL || '').trim().replace(/\/$/, '');
+  if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
+    const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+    const host = req.get('x-forwarded-host') || req.get('host') || '';
+    baseUrl = host ? `${proto}://${host}` : '';
+  }
   const connectLink = baseUrl && seller?.slug ? `${baseUrl}/connect/${seller.slug}` : '';
   res.render('seller/dashboard', {
     creditsBalance: seller?.credits_balance ?? 0,
@@ -49,6 +55,7 @@ router.get('/', requireSeller, async (req, res) => {
     earnedAmount: earnedAmount ?? 0,
     ccpu: seller?.ccpu ?? 30,
     connectLink: connectLink || '',
+    slug: seller?.slug || '',
   });
 });
 
