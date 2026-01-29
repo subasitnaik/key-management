@@ -93,10 +93,12 @@
       })();
     </script>
     <div class="card">
-      <form method="post" action="/panel/seller/maintenance">
+      <form method="post" action="/panel/seller">
+        <input type="hidden" name="_action" value="maintenance" />
         <button type="submit" class="btn btn-secondary">Toggle Maintenance Mode</button>
       </form>
-      <form method="post" action="/panel/seller/reset" style="margin-top:0.5rem;" onsubmit="return confirm('Reset all subscriptions for this seller? This cannot be undone.');">
+      <form method="post" action="/panel/seller" style="margin-top:0.5rem;" onsubmit="return confirm('Reset all subscriptions for this seller? This cannot be undone.');">
+        <input type="hidden" name="_action" value="reset" />
         <button type="submit" class="btn btn-danger">Reset Cycle</button>
       </form>
     </div>

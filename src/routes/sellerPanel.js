@@ -61,6 +61,25 @@ router.get('/', requireSeller, async (req, res) => {
   });
 });
 
+// Single POST /panel/seller so rewrites (e.g. Vercel) that strip path to /panel/seller still work; dispatch by body._action
+router.post('/', requireSeller, async (req, res) => {
+  const action = (req.body && req.body._action) ? String(req.body._action).toLowerCase() : '';
+  if (action === 'maintenance') {
+    const seller = await getSellerById(req.session.sellerId);
+    const next = seller?.maintenance_mode ? 0 : 1;
+    if (next === 1) {
+      await getSupabase().from('subscriptions').update({ maintenance_paused_at: new Date().toISOString() }).eq('seller_id', req.session.sellerId);
+    }
+    await updateSeller(req.session.sellerId, { maintenance_mode: next });
+    return res.redirect('/panel/seller');
+  }
+  if (action === 'reset') {
+    await getSupabase().from('subscriptions').delete().eq('seller_id', req.session.sellerId);
+    return res.redirect('/panel/seller?reset=done');
+  }
+  res.redirect('/panel/seller');
+});
+
 function randomKey() {
   return 'key_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
 }
