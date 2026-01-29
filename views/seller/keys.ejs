@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Keys</title>
+</head>
+<body>
+  <h1>Keys / Subscriptions</h1>
+  <p><a href="/panel/seller">Back</a></p>
+  <ul>
+    <% (subscriptions || []).forEach(function(s) { %>
+    <li>Key: <%= s.key %> — expires <%= s.expires_at %></li>
+    <% }); %>
+  </ul>
+</body>
+</html>

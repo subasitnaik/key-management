@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payment Requests</title>
+</head>
+<body>
+  <h1>Pending Payment Requests</h1>
+  <p><a href="/panel/seller">Back</a></p>
+  <ul>
+    <% (pending || []).forEach(function(pr) { %>
+    <li>ID <%= pr.id %> — Plan <%= pr.plan_id %> — UTR <%= pr.utr %> — Attempts <%= pr.attempts %>
+      <form method="post" action="/api/payment/accept/<%= pr.id %>" style="display:inline"><button type="submit">Accept</button></form>
+      <form method="post" action="/api/payment/reject/<%= pr.id %>" style="display:inline"><button type="submit">Reject</button></form>
+      <form method="post" action="/api/payment/block/<%= pr.id %>" style="display:inline"><button type="submit">Block</button></form>
+    </li>
+    <% }); %>
+  </ul>
+</body>
+</html>

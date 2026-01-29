@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Sellers</title>
+</head>
+<body>
+  <h1>Sellers</h1>
+  <p><a href="/panel/admin">Back</a> | <a href="/panel/admin/sellers/new">New Seller</a></p>
+  <ul>
+    <% (sellers || []).forEach(function(s) { %>
+    <li><a href="/panel/admin/sellers/<%= s.id %>"><%= s.username %></a> (slug: <%= s.slug %>, credits: <%= s.credits_balance %>)</li>
+    <% }); %>
+  </ul>
+</body>
+</html>

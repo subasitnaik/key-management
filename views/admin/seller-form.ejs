@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title><%= seller ? 'Edit Seller' : 'New Seller' %></title>
+</head>
+<body>
+  <h1><%= seller ? 'Edit Seller' : 'New Seller' %></h1>
+  <p><a href="/panel/admin/sellers">Back</a></p>
+  <form method="post" action="<%= seller ? '/panel/admin/sellers/' + seller.id : '/panel/admin/sellers' %>">
+    <% if (!seller) { %>
+    <label>Slug: <input name="slug" type="text" required></label><br>
+    <label>Password: <input name="password" type="password" required></label><br>
+    <% } %>
+    <label>Username: <input name="username" type="text" value="<%= seller ? (seller.username || '') : '' %>" required></label><br>
+    <label>CCPU: <input name="ccpu" type="number" value="<%= seller ? (seller.ccpu || 30) : 30 %>"></label><br>
+    <label>Telegram username: <input name="telegram_username" type="text" value="<%= seller ? (seller.telegram_username || '') : '' %>" placeholder="@username"></label><br>
+    <label>Telegram bot token: <input name="telegram_bot_token" type="text" value="<%= seller ? (seller.telegram_bot_token || '') : '' %>" placeholder="optional"></label><br>
+    <label>Query channel: <input name="query_channel_enabled" type="checkbox" <%= seller && seller.query_channel_enabled ? 'checked' : '' %>></label><br>
+    <label>Query group link: <input name="query_group_link" type="text" value="<%= seller ? (seller.query_group_link || '') : '' %>"></label><br>
+    <label>Private group link: <input name="private_group_link" type="text" value="<%= seller ? (seller.private_group_link || '') : '' %>"></label><br>
+    <button type="submit">Save</button>
+  </form>
+</body>
+</html>
