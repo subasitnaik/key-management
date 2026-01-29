@@ -61,6 +61,16 @@ router.get('/', requireSeller, async (req, res) => {
   });
 });
 
+// Build absolute panel URL for redirects to avoid redirect loops (same-origin, correct path).
+function panelSellerUrl(req, path = '/panel/seller', qs = '') {
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const host = req.get('x-forwarded-host') || req.get('host') || '';
+  if (!host) return path + (qs ? (path.includes('?') ? '&' + qs.replace(/^\?/, '') : '?' + qs.replace(/^\?/, '')) : '');
+  const base = `${proto}://${host}`.replace(/\/$/, '');
+  const p = path.startsWith('/') ? path : '/' + path;
+  return base + p + (qs ? (p.includes('?') ? '&' + qs.replace(/^\?/, '') : '?' + qs.replace(/^\?/, '')) : '');
+}
+
 // Single POST /panel/seller so rewrites (e.g. Vercel) that strip path to /panel/seller still work; dispatch by body._action
 router.post('/', requireSeller, async (req, res) => {
   const action = (req.body && req.body._action) ? String(req.body._action).toLowerCase() : '';
@@ -71,13 +81,13 @@ router.post('/', requireSeller, async (req, res) => {
       await getSupabase().from('subscriptions').update({ maintenance_paused_at: new Date().toISOString() }).eq('seller_id', req.session.sellerId);
     }
     await updateSeller(req.session.sellerId, { maintenance_mode: next });
-    return res.redirect('/panel/seller');
+    return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
   }
   if (action === 'reset') {
     await getSupabase().from('subscriptions').delete().eq('seller_id', req.session.sellerId);
-    return res.redirect('/panel/seller?reset=done');
+    return res.redirect(303, panelSellerUrl(req, '/panel/seller', 'reset=done'));
   }
-  res.redirect('/panel/seller');
+  return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
 });
 
 function randomKey() {
