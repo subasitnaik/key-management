@@ -31,12 +31,53 @@
       <h2>Connect link (paste in your tool)</h2>
       <% const isUrl = typeof connectLink !== 'undefined' && connectLink && (connectLink.indexOf('http://') === 0 || connectLink.indexOf('https://') === 0); %>
       <% if (isUrl) { %>
-      <p><code class="badge connect-link"><%= connectLink %></code></p>
-      <p class="text-dim">Copy this URL and paste it in your Android tool config so keys work.</p>
+      <div class="connect-link-row">
+        <code class="badge connect-link" id="connect-link-text"><%= connectLink %></code>
+        <button type="button" class="btn btn-small btn-copy" id="copy-connect-link" data-url="<%= connectLink %>" aria-label="Copy link">Copy</button>
+      </div>
+      <p class="text-dim" id="copy-feedback" style="display:none;">Copied!</p>
+      <p class="text-dim">Paste this URL in your Android tool config so keys work.</p>
+      <% if (typeof usedPanelUrl !== 'undefined' && !usedPanelUrl) { %>
+      <p class="text-dim warning-inline">To always show your production link (e.g. key-management-five.vercel.app), set <strong>PANEL_URL</strong> in Vercel → Project → Settings → Environment Variables to <code>https://key-management-five.vercel.app</code></p>
+      <% } %>
       <% } else { %>
-      <p class="text-dim">Your connect path: <code>/connect/<%= typeof slug !== 'undefined' ? slug : '' %></code>. Paste your site URL + this path in the tool (e.g. https://your-site.vercel.app/connect/<%= typeof slug !== 'undefined' ? slug : '' %>).</p>
+      <p class="text-dim">Your connect path: <code>/connect/<%= typeof slug !== 'undefined' ? slug : '' %></code>. Set <strong>PANEL_URL</strong> in Vercel to your production URL (e.g. <code>https://key-management-five.vercel.app</code>), then the full link will appear here.</p>
       <% } %>
     </div>
+    <script>
+      (function() {
+        var btn = document.getElementById('copy-connect-link');
+        var feedback = document.getElementById('copy-feedback');
+        if (btn && feedback) {
+          btn.addEventListener('click', function() {
+            var url = btn.getAttribute('data-url') || (document.getElementById('connect-link-text') && document.getElementById('connect-link-text').textContent) || '';
+            if (!url) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url).then(function() {
+                feedback.style.display = 'block';
+                feedback.textContent = 'Copied!';
+                setTimeout(function() { feedback.style.display = 'none'; }, 2000);
+              }).catch(function() { feedback.textContent = 'Copy failed'; feedback.style.display = 'block'; });
+            } else {
+              var ta = document.createElement('textarea');
+              ta.value = url;
+              ta.setAttribute('readonly', '');
+              ta.style.position = 'fixed';
+              ta.style.left = '-9999px';
+              document.body.appendChild(ta);
+              ta.select();
+              try {
+                document.execCommand('copy');
+                feedback.style.display = 'block';
+                feedback.textContent = 'Copied!';
+                setTimeout(function() { feedback.style.display = 'none'; }, 2000);
+              } catch (e) { feedback.textContent = 'Copy failed'; feedback.style.display = 'block'; }
+              document.body.removeChild(ta);
+            }
+          });
+        }
+      })();
+    </script>
     <div class="card">
       <form method="post" action="/panel/seller/maintenance">
         <button type="submit" class="btn btn-secondary">Toggle Maintenance Mode</button>

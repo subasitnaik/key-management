@@ -41,7 +41,7 @@ router.get('/', requireSeller, async (req, res) => {
     getActiveSubscriptionsCount(sellerId),
     getEarnedAmountBySeller(sellerId),
   ]);
-  // Build connect URL: use PANEL_URL if it looks like a URL, else derive from request (so it works on Vercel without env)
+  // Always use PANEL_URL for the connect link so sellers see the production domain (e.g. key-management-five.vercel.app), not a Vercel preview URL. Set PANEL_URL in Vercel to https://key-management-five.vercel.app (or your production domain).
   let baseUrl = (process.env.PANEL_URL || '').trim().replace(/\/$/, '');
   if (!baseUrl || !/^https?:\/\//i.test(baseUrl)) {
     const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
@@ -49,6 +49,7 @@ router.get('/', requireSeller, async (req, res) => {
     baseUrl = host ? `${proto}://${host}` : '';
   }
   const connectLink = baseUrl && seller?.slug ? `${baseUrl}/connect/${seller.slug}` : '';
+  const usedPanelUrl = !!(process.env.PANEL_URL || '').trim() && /^https?:\/\//i.test((process.env.PANEL_URL || '').trim());
   res.render('seller/dashboard', {
     creditsBalance: seller?.credits_balance ?? 0,
     activeUsers: activeUsers ?? 0,
@@ -56,6 +57,7 @@ router.get('/', requireSeller, async (req, res) => {
     ccpu: seller?.ccpu ?? 30,
     connectLink: connectLink || '',
     slug: seller?.slug || '',
+    usedPanelUrl,
   });
 });
 
