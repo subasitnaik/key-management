@@ -1,7 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build 2>/dev/null || true",
-  "installCommand": "npm install",
-  "framework": null,
+  "buildCommand": "npm install",
+  "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/" }]
 }
