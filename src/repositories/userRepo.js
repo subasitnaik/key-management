@@ -18,3 +18,8 @@ export async function getUserById(id) {
   const { data } = await getSupabase().from('users').select('*').eq('id', id).maybeSingle();
   return data;
 }
+
+export async function getUserByTelegramId(telegram_user_id) {
+  const { data } = await getSupabase().from('users').select('*').eq('telegram_user_id', String(telegram_user_id)).maybeSingle();
+  return data;
+}

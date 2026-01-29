@@ -45,21 +45,37 @@ router.get('/sellers', requireMasterAdmin, async (req, res) => {
 });
 
 router.get('/sellers/new', requireMasterAdmin, (req, res) => {
-  res.render('admin/seller-form', { seller: null });
+  res.render('admin/seller-form', { seller: null, error: req.query.error });
 });
 
 router.post('/sellers', requireMasterAdmin, async (req, res) => {
-  const { slug, username, password, ccpu, query_channel_enabled } = req.body || {};
-  if (!slug || !username || !password) return res.redirect('/panel/admin/sellers?error=missing');
-  const hash = bcrypt.hashSync(password, 10);
-  await createSeller({
-    slug: slug.trim(),
-    username: username.trim(),
-    password_hash: hash,
-    ccpu: parseInt(ccpu, 10) || 30,
-    query_channel_enabled: query_channel_enabled ? 1 : 0,
-  });
-  res.redirect('/panel/admin/sellers');
+  try {
+    const { slug, username, password, ccpu, query_channel_enabled, telegram_username, telegram_bot_token, private_group_link, query_group_link } = req.body || {};
+    if (!slug || !username || !password) return res.redirect(303, '/panel/admin/sellers?error=missing');
+    const hash = bcrypt.hashSync(password, 10);
+    const row = {
+      slug: slug.trim(),
+      username: username.trim(),
+      password_hash: hash,
+      ccpu: parseInt(ccpu, 10) || 30,
+      query_channel_enabled: query_channel_enabled ? 1 : 0,
+      telegram_username: telegram_username?.trim() || null,
+      telegram_bot_token: telegram_bot_token?.trim() || null,
+      private_group_link: private_group_link?.trim() || null,
+      query_group_link: query_group_link?.trim() || null,
+    };
+    const seller = await createSeller(row);
+    // Set webhook in background so POST responds quickly (avoids timeout/redirect issues)
+    if (row.telegram_bot_token && seller?.id) {
+      setTelegramWebhook(seller.id).catch((e) => console.error('setTelegramWebhook:', e));
+    }
+    return res.redirect(303, '/panel/admin/sellers?created=1');
+  } catch (err) {
+    console.error('Create seller failed:', err?.message || err);
+    const msg = (err?.message || '').toLowerCase();
+    const code = msg.includes('unique') || msg.includes('duplicate') ? 'duplicate' : 'error';
+    return res.redirect(303, '/panel/admin/sellers/new?error=' + code);
+  }
 });
 
 router.get('/sellers/:id', requireMasterAdmin, async (req, res) => {

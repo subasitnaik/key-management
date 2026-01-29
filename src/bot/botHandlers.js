@@ -5,11 +5,12 @@
 import { Telegraf, Markup } from 'telegraf';
 import { getPlansBySeller } from '../repositories/planRepo.js';
 import { getSellerById } from '../repositories/sellerRepo.js';
-import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
+import { findOrCreateUserByTelegram, getUserByTelegramId } from '../repositories/userRepo.js';
 import { createPaymentRequest, getPaymentRequestById, updatePaymentRequest } from '../repositories/paymentRequestRepo.js';
 import { isBlocked, blockUser } from '../repositories/blockedUserRepo.js';
 import { addLedgerEntry } from '../repositories/creditLedgerRepo.js';
 import { getSupabase } from '../db/supabase.js';
+import { getActiveSubscriptionForUserAndSeller } from '../repositories/subscriptionRepo.js';
 
 function generateKey() {
   return 'key_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
@@ -132,9 +133,16 @@ export function registerBotHandlers(bot, sellerId) {
 
     const userRow = await getSupabase().from('users').select('*').eq('id', pr.user_id).single().then((r) => r.data);
     const telegramUserId = userRow?.telegram_user_id;
-    if (telegramUserId && seller.telegram_bot_token) {
-      const b = new Telegraf(seller.telegram_bot_token);
-      await b.telegram.sendMessage(telegramUserId, `Approved! Your key: ${key}\nExpires: ${expiresAt.toLocaleDateString()}`);
+    if (telegramUserId) {
+      let msg = `Approved! Your key: ${key}\nExpires: ${expiresAt.toLocaleDateString()}`;
+      if (seller.private_group_link) {
+        msg += `\n\nJoin the private group: ${seller.private_group_link}`;
+      }
+      try {
+        await ctx.telegram.sendMessage(telegramUserId, msg);
+      } catch (e) {
+        console.error('Notify user after accept:', e);
+      }
     }
     await ctx.answerCbQuery('Accepted');
     await ctx.reply('Payment accepted. User notified.');
@@ -165,5 +173,20 @@ export function registerBotHandlers(bot, sellerId) {
     await updatePaymentRequest(prId, { status: 'blocked' });
     await ctx.answerCbQuery('Blocked');
     await ctx.reply('User blocked.');
+  });
+
+  // Approve join requests to seller's private group when user has active subscription
+  bot.on('chat_join_request', async (ctx) => {
+    const telegramUserId = ctx.from?.id;
+    if (telegramUserId == null || !ctx.chat) return;
+    const user = await getUserByTelegramId(telegramUserId);
+    if (!user) return;
+    const sub = await getActiveSubscriptionForUserAndSeller(user.id, sellerId);
+    if (!sub) return;
+    try {
+      await ctx.approveChatJoinRequest(telegramUserId);
+    } catch (e) {
+      console.error('approveChatJoinRequest failed:', e);
+    }
   });
 }

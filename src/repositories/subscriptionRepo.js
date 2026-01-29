@@ -35,6 +35,23 @@ export async function getSubscriptionByKey(key, sellerId) {
   return data;
 }
 
+/** Returns active subscription for user+seller if not expired and seller not suspended. */
+export async function getActiveSubscriptionForUserAndSeller(userId, sellerId) {
+  const supabase = getSupabase();
+  const now = new Date().toISOString();
+  const { data: sub } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('seller_id', sellerId)
+    .gt('expires_at', now)
+    .maybeSingle();
+  if (!sub) return null;
+  const { data: seller } = await supabase.from('sellers').select('suspended').eq('id', sellerId).maybeSingle();
+  if (seller?.suspended) return null;
+  return sub;
+}
+
 export async function getSubscriptionsBySeller(sellerId) {
   const { data, error } = await getSupabase().from('subscriptions').select('*').eq('seller_id', sellerId).order('created_at', { ascending: false });
   if (error) throw error;

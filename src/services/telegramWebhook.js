@@ -10,10 +10,11 @@ export async function setTelegramWebhook(sellerId) {
   const base = (process.env.PANEL_URL || '').replace(/\/$/, '');
   if (!base) return;
   const url = `${base}/api/telegram/webhook/${sellerId}`;
+  const allowedUpdates = ['message', 'callback_query', 'chat_join_request'];
   const res = await fetch(`https://api.telegram.org/bot${seller.telegram_bot_token}/setWebhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, allowed_updates: allowedUpdates }),
   });
   const data = await res.json().catch(() => ({}));
   if (!data.ok) console.error('setWebhook failed:', data);
