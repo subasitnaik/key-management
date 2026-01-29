@@ -7,13 +7,18 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="page">
-    <nav class="nav">
+  <header class="header">
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
+    <label for="nav-toggle" class="hamburger" aria-label="Open menu"><span></span></label>
+    <a href="/panel/admin/logout" class="header-logout">Logout</a>
+    <nav class="nav-menu">
       <a href="/panel/admin">Dashboard</a>
       <a href="/panel/admin/sellers">Sellers</a>
       <a href="/panel/admin/settings">Settings</a>
-      <a href="/panel/admin/logout">Logout</a>
     </nav>
+    <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
+  </header>
+  <div class="page">
     <h1><%= seller ? 'Edit Seller' : 'New Seller' %></h1>
     <p><a href="/panel/admin/sellers" class="btn btn-secondary">Back</a></p>
     <div class="card">
