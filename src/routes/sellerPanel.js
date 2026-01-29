@@ -9,7 +9,7 @@ import { getSubscriptionsBySeller } from '../repositories/subscriptionRepo.js';
 import { getPlansBySeller, getPlanById, createPlan, updatePlan, deletePlan } from '../repositories/planRepo.js';
 import { getPendingBySeller } from '../repositories/paymentRequestRepo.js';
 import { getLedgerBySeller } from '../repositories/creditLedgerRepo.js';
-import { createSubscription } from '../repositories/subscriptionRepo.js';
+import { createSubscription, deleteSubscription } from '../repositories/subscriptionRepo.js';
 import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
 import { getSupabase } from '../db/supabase.js';
 
@@ -55,6 +55,8 @@ router.get('/keys', requireSeller, async (req, res) => {
     subscriptions: subs || [],
     generated: req.query.generated === '1',
     generatedKey: req.query.key ? decodeURIComponent(req.query.key) : undefined,
+    deleted: req.query.deleted === '1',
+    error: req.query.error,
   });
 });
 
@@ -95,6 +97,18 @@ router.post('/keys/generate', requireSeller, async (req, res) => {
   } catch (err) {
     console.error('Generate key failed:', err?.message || err);
     return res.redirect(303, '/panel/seller/keys/generate?error=error');
+  }
+});
+
+router.post('/keys/:id/delete', requireSeller, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const sellerId = req.session.sellerId;
+  try {
+    await deleteSubscription(id, sellerId);
+    return res.redirect(303, '/panel/seller/keys?deleted=1');
+  } catch (err) {
+    console.error('Delete key failed:', err?.message || err);
+    return res.redirect(303, '/panel/seller/keys?error=delete');
   }
 });
 

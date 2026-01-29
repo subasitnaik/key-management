@@ -69,3 +69,8 @@ export async function updateSubscription(id, updates) {
   if (error) throw error;
   return data;
 }
+
+export async function deleteSubscription(id, sellerId) {
+  const { error } = await getSupabase().from('subscriptions').delete().eq('id', id).eq('seller_id', sellerId);
+  if (error) throw error;
+}
