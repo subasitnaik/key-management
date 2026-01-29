@@ -21,12 +21,17 @@
   </header>
   <div class="page">
     <h1>Keys / Subscriptions</h1>
-    <p><a href="/panel/seller" class="btn btn-secondary">Back</a></p>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back</a> <a href="/panel/seller/keys/generate" class="btn">Generate key</a></p>
+    <% if (typeof generated !== 'undefined' && generated) { %>
+    <div class="card success-msg">
+      Key generated.<% if (typeof generatedKey !== 'undefined' && generatedKey) { %> <strong>Key:</strong> <code class="badge"><%= generatedKey %></code> — copy and share with the user.<% } %>
+    </div>
+    <% } %>
     <div class="card">
       <ul class="list">
         <% (subscriptions || []).forEach(function(s) { %>
         <li>
-          <span>Key: <code class="badge"><%= s.key %></code> — expires <%= s.expires_at %></span>
+          <span>Key: <code class="badge"><%= s.key %></code> — max devices: <%= s.max_devices ?? 1 %> — expires <%= s.expires_at %></span>
         </li>
         <% }); %>
       </ul>

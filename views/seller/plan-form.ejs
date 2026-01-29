@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= plan ? 'Edit Plan' : 'New Plan' %></title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="header">
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
+    <label for="nav-toggle" class="hamburger" aria-label="Open menu"><span></span></label>
+    <a href="/panel/seller/logout" class="header-logout">Logout</a>
+    <nav class="nav-menu">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+    </nav>
+    <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
+  </header>
+  <div class="page">
+    <h1><%= plan ? 'Edit Plan' : 'New Plan' %></h1>
+    <p><a href="/panel/seller/plans" class="btn btn-secondary">Back</a></p>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="card error-msg" role="alert">
+      <% if (error === 'missing') { %>Please fill Name, Days and Price.<% } else { %>Could not save. Try again.<% } %>
+    </div>
+    <% } %>
+    <div class="card">
+      <form method="post" action="<%= plan ? '/panel/seller/plans/' + plan.id : '/panel/seller/plans' %>">
+        <div class="form-group">
+          <label>Plan name</label>
+          <input name="name" type="text" value="<%= plan ? (plan.name || '') : '' %>" required placeholder="e.g. 1 Month">
+        </div>
+        <div class="form-group">
+          <label>Days</label>
+          <input name="days" type="number" value="<%= plan ? (plan.days || 30) : 30 %>" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Price (₹)</label>
+          <input name="price" type="number" step="0.01" value="<%= plan ? (plan.price ?? 0) : 0 %>" min="0" required>
+        </div>
+        <button type="submit" class="btn">Save</button>
+      </form>
+    </div>
+    <% if (plan) { %>
+    <div class="card">
+      <h2>Delete plan</h2>
+      <form method="post" action="/panel/seller/plans/<%= plan.id %>/delete" onsubmit="return confirm('Delete this plan?');">
+        <button type="submit" class="btn btn-danger">Delete plan</button>
+      </form>
+    </div>
+    <% } %>
+  </div>
+</body>
+</html>

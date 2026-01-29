@@ -21,11 +21,28 @@
   </header>
   <div class="page">
     <h1>Plans</h1>
-    <p><a href="/panel/seller" class="btn btn-secondary">Back</a></p>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back</a> <a href="/panel/seller/plans/new" class="btn">New Plan</a></p>
+    <% if (typeof created !== 'undefined' && created) { %>
+    <div class="card success-msg">Plan created.</div>
+    <% } %>
+    <% if (typeof updated !== 'undefined' && updated) { %>
+    <div class="card success-msg">Plan updated.</div>
+    <% } %>
+    <% if (typeof deleted !== 'undefined' && deleted) { %>
+    <div class="card success-msg">Plan deleted.</div>
+    <% } %>
     <div class="card">
-      <ul class="list">
+      <ul class="list seller-list">
         <% (plans || []).forEach(function(p) { %>
-        <li><%= p.name %> — <%= p.days %> days — ₹<%= p.price %></li>
+        <li class="seller-row">
+          <span><%= p.name %> — <%= p.days %> days — ₹<%= p.price %></span>
+          <span class="row-actions">
+            <a href="/panel/seller/plans/<%= p.id %>/edit" class="btn btn-small">Edit</a>
+            <form method="post" action="/panel/seller/plans/<%= p.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this plan?');">
+              <button type="submit" class="btn btn-small btn-danger">Delete</button>
+            </form>
+          </span>
+        </li>
         <% }); %>
       </ul>
     </div>
