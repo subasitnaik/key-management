@@ -2,5 +2,5 @@
   "version": 2,
   "buildCommand": "npm install",
   "outputDirectory": ".",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/$1" }]
 }

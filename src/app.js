@@ -73,6 +73,10 @@ export function createApp() {
   app.use('/api/payment', paymentApi);
   app.use('/api/telegram/webhook', telegramWebhook);
 
+  app.get('/', (req, res) => {
+    res.redirect('/panel/admin');
+  });
+
   // Error handler so crashes return a message (and show in Vercel logs)
   app.use((err, req, res, next) => {
     console.error('Server error:', err?.message || err);
