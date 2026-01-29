@@ -41,10 +41,14 @@ router.get('/', requireSeller, async (req, res) => {
     getActiveSubscriptionsCount(sellerId),
     getEarnedAmountBySeller(sellerId),
   ]);
+  const baseUrl = (process.env.PANEL_URL || '').replace(/\/$/, '');
+  const connectLink = baseUrl && seller?.slug ? `${baseUrl}/connect/${seller.slug}` : '';
   res.render('seller/dashboard', {
     creditsBalance: seller?.credits_balance ?? 0,
     activeUsers: activeUsers ?? 0,
     earnedAmount: earnedAmount ?? 0,
+    ccpu: seller?.ccpu ?? 30,
+    connectLink: connectLink || '',
   });
 });
 
