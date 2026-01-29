@@ -8,10 +8,8 @@ import { getSellerById } from '../repositories/sellerRepo.js';
 import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
 import { createPaymentRequest, getPaymentRequestById, updatePaymentRequest } from '../repositories/paymentRequestRepo.js';
 import { isBlocked, blockUser } from '../repositories/blockedUserRepo.js';
-import { getSubscriptionByKey, createSubscription, getSubscriptionsBySeller } from '../repositories/subscriptionRepo.js';
 import { addLedgerEntry } from '../repositories/creditLedgerRepo.js';
 import { getSupabase } from '../db/supabase.js';
-import { sendTelegramMessage } from '../services/telegramNotify.js';
 
 function generateKey() {
   return 'key_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
