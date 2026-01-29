@@ -21,12 +21,26 @@
   </header>
   <div class="page">
     <h1>Seller Dashboard</h1>
-    <div class="card">
-      <p><strong>Credits:</strong> <%= creditsBalance %></p>
-      <p><strong>CCPU:</strong> <%= typeof ccpu !== 'undefined' ? ccpu : 30 %> (credits per user per month)</p>
-      <p><strong>Active users:</strong> <%= typeof activeUsers !== 'undefined' ? activeUsers : 0 %> (keys not expired)</p>
-      <p><strong>Earned this cycle:</strong> ₹<%= typeof earnedAmount !== 'undefined' ? earnedAmount.toFixed(2) : '0.00' %></p>
-    </div>
+    <section class="stats-grid" aria-label="Overview stats">
+      <div class="stat-card">
+        <span class="stat-label">Credits</span>
+        <span class="stat-value"><%= creditsBalance %></span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">CCPU</span>
+        <span class="stat-value"><%= typeof ccpu !== 'undefined' ? ccpu : 30 %></span>
+        <span class="stat-meta">credits per user / month</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active users</span>
+        <span class="stat-value"><%= typeof activeUsers !== 'undefined' ? activeUsers : 0 %></span>
+        <span class="stat-meta">keys not expired</span>
+      </div>
+      <div class="stat-card stat-card-earned">
+        <span class="stat-label">Earned this cycle</span>
+        <span class="stat-value">₹<%= typeof earnedAmount !== 'undefined' ? earnedAmount.toFixed(2) : '0.00' %></span>
+      </div>
+    </section>
     <div class="card">
       <h2>Connect link (paste in your tool)</h2>
       <% const isUrl = typeof connectLink !== 'undefined' && connectLink && (connectLink.indexOf('http://') === 0 || connectLink.indexOf('https://') === 0); %>
