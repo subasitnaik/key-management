@@ -25,7 +25,8 @@ router.post('/login', async (req, res) => {
     return res.render('admin/login', { error: 'Invalid credentials' });
   }
   req.session.masterAdminId = admin.id;
-  res.redirect('/panel/admin');
+  // 200 + client redirect so Set-Cookie is sent (serverless often strips it on 302)
+  res.status(200).render('admin/login-redirect', { redirectUrl: '/panel/admin' });
 });
 
 router.post('/logout', (req, res) => {

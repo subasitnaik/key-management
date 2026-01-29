@@ -28,7 +28,8 @@ router.post('/login', async (req, res) => {
     return res.render('seller/login', { error: 'Invalid credentials' });
   }
   req.session.sellerId = seller.id;
-  res.redirect('/panel/seller');
+  // 200 + client redirect so Set-Cookie is sent (serverless often strips it on 302)
+  res.status(200).render('admin/login-redirect', { redirectUrl: '/panel/seller' });
 });
 
 router.post('/logout', (req, res) => {
