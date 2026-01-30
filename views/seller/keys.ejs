@@ -37,7 +37,7 @@
       <ul class="list seller-list">
         <% (subscriptions || []).forEach(function(s) { %>
         <li class="seller-row">
-          <span>Key: <code class="badge"><%= s.key %></code> — max devices: <%= s.max_devices ?? 1 %> — expires <%= s.expires_at %></span>
+          <span>Key: <code class="badge"><%= s.key %></code> — max devices: <%= s.max_devices ?? 1 %> — expires <%= s.expires_at ? new Date(s.expires_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) : '—' %></span>
           <span class="row-actions">
             <form method="post" action="/panel/seller/keys/<%= s.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this key? The user will no longer have access.');">
               <button type="submit" class="btn btn-small btn-danger">Delete</button>

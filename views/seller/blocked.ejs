@@ -39,7 +39,7 @@
       <ul class="list">
         <% (blocked || []).forEach(function(row) { %>
         <li class="seller-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
-          <span><strong><%= row.telegram_username %></strong> — ID: <code><%= row.telegram_user_id || '—' %></code> — blocked <%= row.blocked_at ? new Date(row.blocked_at).toLocaleString() : '' %></span>
+          <span><strong><%= row.telegram_username %></strong> — ID: <code><%= row.telegram_user_id || '—' %></code> — blocked <%= row.blocked_at ? new Date(row.blocked_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) : '' %></span>
           <form method="post" action="/panel/seller/blocked/unblock/<%= row.user_id %>" style="display:inline;" onsubmit="return confirm('Unblock this user?');">
             <button type="submit" class="btn btn-small">Unblock</button>
           </form>

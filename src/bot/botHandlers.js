@@ -201,7 +201,7 @@ export function registerBotHandlers(bot, sellerId) {
     const userRow = await getSupabase().from('users').select('*').eq('id', pr.user_id).single().then((r) => r.data);
     const telegramUserId = userRow?.telegram_user_id;
     if (telegramUserId) {
-      let msg = `Approved! Your key: ${key}\nExpires: ${expiresAt.toLocaleDateString()}`;
+      let msg = `Approved! Your key: ${key}\nExpires: ${expiresAt.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}`;
       if (seller.private_group_link) {
         msg += `\n\nJoin the private group: ${seller.private_group_link}`;
       }
