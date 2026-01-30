@@ -43,8 +43,6 @@ Follow these steps so the bot works end-to-end: payment requests, seller approva
      Example: `@seller_john`.  
      The bot will send payment notifications and Accept/Reject/Block buttons to this user.
 4. Optional but recommended:
-   - **Payment QR code (image URL)**  
-     Public URL to your payment QR image (e.g. from Imgur or your host). After a user chooses a plan, the bot sends this image with the payment instructions. Leave blank to send text only.
    - **Private group link**  
      Invite link for the paid users’ private group. After payment is accepted, the user gets their key **and** this link in a message from the bot.
    - **Query group link**  
@@ -111,7 +109,6 @@ No extra config is needed in the panel beyond the bot token, seller’s Telegram
 - [ ] Seller created/edited with **Telegram bot token** and **Telegram username** (seller’s @username).
 - [ ] Seller (or you) has **started the bot** in Telegram at least once.
 - [ ] Seller has **at least one plan** (Plans in seller panel) so `/start` shows plans.
-- [ ] (Optional) **Payment QR URL** set so the bot sends the QR when a user picks a plan.
 - [ ] (Optional) Private group created; bot added as admin with “Approve invite requests”; link set in **Private group link**.
 
 ---

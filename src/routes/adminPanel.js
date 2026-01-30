@@ -106,7 +106,7 @@ router.get('/sellers/new', requireMasterAdmin, (req, res) => {
 
 router.post('/sellers', requireMasterAdmin, async (req, res) => {
   try {
-    const { slug, username, password, ccpu, query_channel_enabled, telegram_username, telegram_bot_token, private_group_link, query_group_link, payment_qr_url } = req.body || {};
+    const { slug, username, password, ccpu, query_channel_enabled, telegram_username, telegram_bot_token, private_group_link, query_group_link } = req.body || {};
     if (!slug || !username || !password) return res.redirect(303, '/panel/admin/sellers?error=missing');
     const hash = bcrypt.hashSync(password, 10);
     const row = {
@@ -119,7 +119,6 @@ router.post('/sellers', requireMasterAdmin, async (req, res) => {
       telegram_bot_token: telegram_bot_token?.trim() || null,
       private_group_link: private_group_link?.trim() || null,
       query_group_link: query_group_link?.trim() || null,
-      payment_qr_url: payment_qr_url?.trim() || null,
     };
     const seller = await createSeller(row);
     // Set webhook in background so POST responds quickly (avoids timeout/redirect issues)
@@ -150,7 +149,7 @@ router.post('/sellers/:id', requireMasterAdmin, async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const seller = await getSellerById(id);
   if (!seller) return res.redirect('/panel/admin/sellers');
-  const { username, ccpu, telegram_username, telegram_bot_token, query_channel_enabled, query_group_link, private_group_link, payment_qr_url } = req.body || {};
+  const { username, ccpu, telegram_username, telegram_bot_token, query_channel_enabled, query_group_link, private_group_link } = req.body || {};
   const updates = {};
   if (username !== undefined) updates.username = username.trim();
   if (ccpu !== undefined) updates.ccpu = parseInt(ccpu, 10) || 30;
@@ -159,7 +158,6 @@ router.post('/sellers/:id', requireMasterAdmin, async (req, res) => {
   if (query_channel_enabled !== undefined) updates.query_channel_enabled = query_channel_enabled ? 1 : 0;
   if (query_group_link !== undefined) updates.query_group_link = query_group_link?.trim() || null;
   if (private_group_link !== undefined) updates.private_group_link = private_group_link?.trim() || null;
-  if (payment_qr_url !== undefined) updates.payment_qr_url = payment_qr_url?.trim() || null;
   await updateSeller(id, updates);
   if (updates.telegram_bot_token !== undefined) await setTelegramWebhook(id);
   res.redirect('/panel/admin/sellers');

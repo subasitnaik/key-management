@@ -37,19 +37,9 @@ export function registerBotHandlers(bot, sellerId) {
     const plan = await getSupabase().from('plans').select('*').eq('id', planId).eq('seller_id', sellerId).single().then((r) => r.data);
     if (!plan) return ctx.answerCbQuery('Invalid plan');
     const seller = await getSellerById(sellerId);
-    const caption = `Plan: ${plan.name} - ₹${plan.price}\n\nPay using the QR above (if shown), then send your payment screenshot with UTR number in the caption. Wait for approval.`;
-    if (seller?.payment_qr_url && seller.payment_qr_url.trim()) {
-      try {
-        await ctx.replyWithPhoto(seller.payment_qr_url.trim(), { caption });
-      } catch (e) {
-        console.error('replyWithPhoto failed:', e?.message || e);
-        await ctx.reply(caption);
-      }
-    } else {
-      await ctx.reply(
-        `Plan: ${plan.name} - ₹${plan.price}\n\nSend payment screenshot with UTR number as caption. Pay to seller and wait for approval.`
-      );
-    }
+    await ctx.reply(
+      `Plan: ${plan.name} - ₹${plan.price}\n\nSend payment screenshot with UTR number as caption. Pay to seller and wait for approval.`
+    );
     ctx.session = ctx.session || {};
     ctx.session.selectedPlanId = planId;
     await ctx.answerCbQuery();
