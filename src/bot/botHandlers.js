@@ -149,13 +149,16 @@ export function registerBotHandlers(bot, sellerId) {
       success_count: successCount,
     });
 
-    const plan = await getSupabase().from('plans').select('name, price').eq('id', planId).single().then((r) => r.data);
+    const plan = await getSupabase().from('plans').select('name, price, days').eq('id', planId).single().then((r) => r.data);
     const planLabel = plan ? (plan.name ? `${plan.name} - ₹${plan.price}` : `₹${plan.price}`) : `Plan ID: ${planId}`;
+    const ccpu = seller.ccpu || 30;
+    const creditsToDeduct = plan?.days ? Math.ceil((plan.days / 30) * ccpu) : 0;
+    const creditsBalance = seller.credits_balance ?? 0;
 
     const acceptData = `pay_accept:${pr.id}`;
     const rejectData = `pay_reject:${pr.id}`;
     const blockData = `pay_block:${pr.id}`;
-    const text = `Payment Request\nUser: ${username}\nPlan: ${planLabel}\nUTR: ${utr}\nAttempts: ${attempts}\nSuccess: ${successCount}`;
+    const text = `Payment Request\nUser: ${username}\nPlan: ${planLabel}\nUTR: ${utr}\nAttempts: ${attempts}\nSuccess: ${successCount}\n\nCredits balance: ${creditsBalance}\nCredits to deduct (if accepted): ${creditsToDeduct}`;
     const keyboard = Markup.inlineKeyboard([
       [Markup.button.callback('Accept', acceptData), Markup.button.callback('Reject', rejectData), Markup.button.callback('Block', blockData)],
     ]);
