@@ -33,7 +33,7 @@ function getRawBody(req) {
   });
 }
 
-/** Finisher Tool (nlohmann json) throws type_error.302 if any key exists but is null. Never send null for token/rng/EXP. */
+/** Finisher Tool (nlohmann json) throws type_error.302 if any key exists but is null. Never send null. */
 function connectSendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   if (body.success === false) {
@@ -46,16 +46,21 @@ function connectSendJson(res, status, body) {
     };
   } else if (body.success === true && body.data) {
     const d = body.data;
+    const rngNum = typeof d.rng === 'number' && !Number.isNaN(d.rng) ? d.rng : Math.floor(Date.now() / 1000);
+    const expStr = d.EXP != null && d.EXP !== undefined ? String(d.EXP) : ' ';
     body = {
       success: true,
+      reason: 'OK',
       data: {
-        token: d.token != null && d.token !== undefined ? String(d.token) : '1',
-        rng: typeof d.rng === 'number' && !Number.isNaN(d.rng) ? d.rng : Math.floor(Date.now() / 1000),
-        EXP: d.EXP != null && d.EXP !== undefined ? String(d.EXP) : ' '
+        token: '1',
+        rng: rngNum,
+        EXP: expStr
       }
     };
   }
-  res.status(status).end(JSON.stringify(body));
+  const raw = JSON.stringify(body);
+  res.setHeader('Content-Length', Buffer.byteLength(raw, 'utf8'));
+  res.status(status).end(raw);
 }
 
 async function handleConnect(req, res, path, query) {
