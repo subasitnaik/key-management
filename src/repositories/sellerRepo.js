@@ -28,6 +28,17 @@ export async function getSellerById(id) {
   return data;
 }
 
+export async function getSellerBySlug(slug) {
+  const { data, error } = await getSupabase()
+    .from('sellers')
+    .select('*')
+    .eq('slug', String(slug).trim())
+    .eq('suspended', 0)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateSeller(id, updates) {
   const payload = { ...updates, updated_at: new Date().toISOString() };
   const { error } = await getSupabase()
