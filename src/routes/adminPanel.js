@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { requireMasterAdmin } from '../middleware/auth.js';
-import { verifyMasterAdmin } from '../repositories/masterAdminRepo.js';
+import { verifyMasterAdmin, getMasterAdminById, updateMasterAdminCredentials } from '../repositories/masterAdminRepo.js';
 import { getAllSellers, getSellerById, createSeller, updateSeller } from '../repositories/sellerRepo.js';
 import { getActiveSubscriptionsCount } from '../repositories/subscriptionRepo.js';
 import { getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
@@ -15,8 +15,44 @@ import { setTelegramWebhook } from '../services/telegramWebhook.js';
 const router = Router();
 
 export async function handleSettingsPage(req, res) {
-  res.render('admin/settings');
+  const adminId = req.session?.masterAdminId;
+  const admin = adminId ? await getMasterAdminById(adminId) : null;
+  res.render('admin/settings', {
+    username: admin?.username || '',
+    success: req.query.updated === '1',
+    error: req.query.error,
+  });
 }
+
+router.post('/settings', requireMasterAdmin, async (req, res) => {
+  const adminId = req.session.masterAdminId;
+  const { current_password, new_username, new_password } = req.body || {};
+  if (!current_password || typeof current_password !== 'string') {
+    return res.redirect(303, '/panel/admin/settings?error=current');
+  }
+  const admin = await getMasterAdminById(adminId);
+  if (!admin) return res.redirect(303, '/panel/admin/settings?error=error');
+  const verified = await verifyMasterAdmin(admin.username, current_password.trim());
+  if (!verified) return res.redirect(303, '/panel/admin/settings?error=current');
+  const updates = {};
+  const newUser = typeof new_username === 'string' ? new_username.trim() : '';
+  if (newUser && newUser !== admin.username) updates.username = newUser;
+  if (new_password && String(new_password).trim().length >= 1) {
+    updates.password_hash = bcrypt.hashSync(String(new_password).trim(), 10);
+  }
+  if (Object.keys(updates).length === 0) {
+    return res.redirect(303, '/panel/admin/settings?error=nochange');
+  }
+  try {
+    await updateMasterAdminCredentials(adminId, updates);
+    return res.redirect(303, '/panel/admin/settings?updated=1');
+  } catch (err) {
+    console.error('Update admin credentials failed:', err?.message || err);
+    const msg = (err?.message || '').toLowerCase();
+    const code = msg.includes('unique') || msg.includes('duplicate') ? 'duplicate' : 'error';
+    return res.redirect(303, '/panel/admin/settings?error=' + code);
+  }
+});
 
 router.get('/login', (req, res) => {
   if (req.session?.masterAdminId) return res.redirect('/panel/admin');

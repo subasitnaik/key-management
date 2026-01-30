@@ -20,8 +20,35 @@
   </header>
   <div class="page">
     <h1>System Settings</h1>
+    <% if (typeof success !== 'undefined' && success) { %>
+    <div class="card success-msg">Admin username/password updated.</div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="card error-msg" role="alert">
+      <% if (error === 'current') { %>Current password is wrong.<% } %>
+      <% else if (error === 'nochange') { %>Enter a new username and/or password to change.<% } %>
+      <% else if (error === 'duplicate') { %>That username is already taken.<% } %>
+      <% else { %>Update failed. Try again.<% } %>
+    </div>
+    <% } %>
     <div class="card">
-      <p>Configure system-wide options here.</p>
+      <h2>Admin credentials</h2>
+      <p class="text-dim">Current username: <strong><%= typeof username !== 'undefined' ? username : '' %></strong></p>
+      <form method="post" action="/panel/admin/settings" class="form">
+        <div class="form-group">
+          <label for="current_password">Current password</label>
+          <input id="current_password" name="current_password" type="password" required autocomplete="current-password" placeholder="Enter current password">
+        </div>
+        <div class="form-group">
+          <label for="new_username">New username</label>
+          <input id="new_username" name="new_username" type="text" value="<%= typeof username !== 'undefined' ? username : '' %>" placeholder="Leave unchanged or enter new username" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="new_password">New password</label>
+          <input id="new_password" name="new_password" type="password" placeholder="Leave blank to keep current password" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn">Update credentials</button>
+      </form>
     </div>
   </div>
 </body>
