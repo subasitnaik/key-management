@@ -47,6 +47,14 @@ export function registerBotHandlers(bot, sellerId) {
       );
     }
 
+    const telegramUserId = String(ctx.from?.id ?? '');
+    const username = ctx.from?.username ? `@${ctx.from.username}` : ctx.from?.first_name || 'User';
+    const user = telegramUserId ? await findOrCreateUserByTelegram(telegramUserId, username) : null;
+    if (user) {
+      const blockedCheck = await isBlocked(user.id, sellerId);
+      if (blockedCheck) return ctx.reply('You are blocked.');
+    }
+
     const plans = await getPlansBySeller(sellerId);
     if (!plans?.length) {
       return ctx.reply('No plans available. Contact the seller.');
@@ -56,6 +64,16 @@ export function registerBotHandlers(bot, sellerId) {
   });
 
   bot.action(/^plan:(.+)$/, async (ctx) => {
+    const telegramUserId = String(ctx.from?.id ?? '');
+    const user = telegramUserId ? await getUserByTelegramId(telegramUserId) : null;
+    if (user) {
+      const blockedCheck = await isBlocked(user.id, sellerId);
+      if (blockedCheck) {
+        await ctx.answerCbQuery('You are blocked.');
+        return ctx.reply('You are blocked.');
+      }
+    }
+
     const planId = parseInt(ctx.match[1], 10);
     const plan = await getSupabase().from('plans').select('*').eq('id', planId).eq('seller_id', sellerId).single().then((r) => r.data);
     if (!plan) return ctx.answerCbQuery('Invalid plan');

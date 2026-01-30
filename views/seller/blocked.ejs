@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blocked Users</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="header">
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
+    <label for="nav-toggle" class="hamburger" aria-label="Open menu"><span></span></label>
+    <a href="/panel/seller/logout" class="header-logout">Logout</a>
+    <nav class="nav-menu">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/blocked">Blocked</a>
+    </nav>
+    <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
+  </header>
+  <div class="page">
+    <h1>Blocked Users</h1>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back to Dashboard</a></p>
+    <% if (typeof unblocked !== 'undefined' && unblocked) { %>
+    <div class="card success-msg">User unblocked.</div>
+    <% } %>
+    <% if (typeof unblockedAll !== 'undefined' && unblockedAll) { %>
+    <div class="card success-msg">All users unblocked.</div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="card error-msg" role="alert">Something went wrong. Try again.</div>
+    <% } %>
+    <div class="card">
+      <% if (blocked && blocked.length) { %>
+      <form method="post" action="/panel/seller/blocked/unblock-all" style="margin-bottom:1rem;" onsubmit="return confirm('Unblock all users?');">
+        <button type="submit" class="btn btn-secondary">Unblock all</button>
+      </form>
+      <ul class="list">
+        <% (blocked || []).forEach(function(row) { %>
+        <li class="seller-row" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+          <span><strong><%= row.telegram_username %></strong> — ID: <code><%= row.telegram_user_id || '—' %></code> — blocked <%= row.blocked_at ? new Date(row.blocked_at).toLocaleString() : '' %></span>
+          <form method="post" action="/panel/seller/blocked/unblock/<%= row.user_id %>" style="display:inline;" onsubmit="return confirm('Unblock this user?');">
+            <button type="submit" class="btn btn-small">Unblock</button>
+          </form>
+        </li>
+        <% }); %>
+      </ul>
+      <% } else { %>
+      <p class="text-dim">No blocked users.</p>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>
