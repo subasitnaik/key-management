@@ -25,22 +25,29 @@ router.use((req, _res, next) => {
 
 router.use(express.urlencoded({ extended: true }));
 
-/** Error payload: all string fields non-null so tool .get<std::string>() never throws. Send error under multiple keys. */
+/** Error payload: every key the tool might read must be a string (never null). Include all case variants. */
 function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   if (body.success === false) {
     const errStr = typeof body.error === 'string' ? body.error : 'Error';
     const data = body.data && body.data.token !== undefined ? body.data : {};
+    const tokenStr = (data.token != null && data.token !== '') ? String(data.token) : ' ';
+    const expStr = (data.EXP != null && data.EXP !== '') ? String(data.EXP) : ' ';
     body = {
       success: false,
       error: errStr,
+      Error: errStr,
       message: errStr,
+      Message: errStr,
       err: errStr,
       msg: errStr,
       data: {
-        token: (data.token != null && data.token !== '') ? String(data.token) : ' ',
+        token: tokenStr,
+        Token: tokenStr,
         rng: typeof data.rng === 'number' ? data.rng : 0,
-        EXP: (data.EXP != null && data.EXP !== '') ? String(data.EXP) : ' '
+        EXP: expStr,
+        exp: expStr,
+        Exp: expStr
       }
     };
   }
