@@ -3,18 +3,12 @@
   "installCommand": "npm install",
   "builds": [
     {
-      "src": "api/connect.js",
-      "use": "@vercel/node",
-      "config": { "includeFiles": ["src/repositories/sellerRepo.js", "src/db/supabase.js"] }
-    },
-    {
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": { "includeFiles": ["views/**", "public/**", "app.js"] }
     }
   ],
   "rewrites": [
-    { "source": "/connect/:slug", "destination": "/api/connect?slug=:slug" },
     { "source": "/", "destination": "/api" },
     { "source": "/(.*)", "destination": "/api?path=$1" }
   ]
