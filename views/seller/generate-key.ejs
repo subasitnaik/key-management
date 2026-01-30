@@ -40,6 +40,11 @@
           <label>Custom key</label>
           <input name="custom_key" type="text" placeholder="Enter your key string">
         </div>
+        <div class="form-group" id="key-name-group">
+          <label>Key name <span class="text-dim">(optional, for random keys)</span></label>
+          <input name="key_name" type="text" placeholder="e.g. TESTER" maxlength="32" title="Optional: letters, numbers, underscore (others stripped)">
+          <p class="text-dim" style="margin-top:0.25rem;font-size:0.85rem;">If set, key will look like: <code>8DxTESTERx&lt;random&gt;</code>. If empty: <code>8Dx&lt;random&gt;</code>.</p>
+        </div>
         <div class="form-group">
           <label>Max devices</label>
           <input name="max_devices" type="number" value="1" min="1" required title="Number of devices this key can be used on">
@@ -52,9 +57,18 @@
       </form>
     </div>
     <script>
-      document.getElementById('key-type').addEventListener('change', function() {
-        document.getElementById('custom-key-group').style.display = this.value === 'custom' ? 'block' : 'none';
-      });
+      (function() {
+        var keyType = document.getElementById('key-type');
+        var customGroup = document.getElementById('custom-key-group');
+        var nameGroup = document.getElementById('key-name-group');
+        function update() {
+          var isCustom = keyType.value === 'custom';
+          customGroup.style.display = isCustom ? 'block' : 'none';
+          nameGroup.style.display = isCustom ? 'none' : 'block';
+        }
+        keyType.addEventListener('change', update);
+        update();
+      })();
     </script>
   </div>
 </body>

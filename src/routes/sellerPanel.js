@@ -95,6 +95,14 @@ function randomKey() {
   return 'key_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
 }
 
+/** Build designed random key: {days}Dx{random} or {days}Dx{name}x{random}. Name sanitized (alphanumeric + underscore, max 32). */
+function buildRandomKeyWithDesign(daysNum, nameOptional) {
+  const randomPart = Math.random().toString(36).slice(2, 12) + Date.now().toString(36).slice(-4);
+  const prefix = daysNum + 'Dx';
+  const name = nameOptional ? String(nameOptional).trim().replace(/[^a-zA-Z0-9_]/g, '').slice(0, 32) : '';
+  return name ? prefix + name + 'x' + randomPart : prefix + randomPart;
+}
+
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
@@ -119,7 +127,7 @@ router.get('/keys/generate', requireSeller, (req, res) => {
 router.post('/keys/generate', requireSeller, async (req, res) => {
   try {
     const sellerId = req.session.sellerId;
-    const { key_type, custom_key, max_devices, days } = req.body || {};
+    const { key_type, custom_key, key_name, max_devices, days } = req.body || {};
     const keyType = (key_type || 'random').toLowerCase();
     const daysNum = Math.max(1, parseInt(days, 10) || 1);
     const maxDevices = Math.max(1, parseInt(max_devices, 10) || 1);
@@ -130,7 +138,7 @@ router.post('/keys/generate', requireSeller, async (req, res) => {
       const { data: existing } = await getSupabase().from('subscriptions').select('id').eq('key', keyStr).maybeSingle();
       if (existing) return res.redirect(303, '/panel/seller/keys/generate?error=duplicate');
     } else {
-      keyStr = randomKey();
+      keyStr = buildRandomKeyWithDesign(daysNum, key_name);
     }
 
     const placeholderUserId = 'manual_' + sellerId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
