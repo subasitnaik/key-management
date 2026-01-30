@@ -15,14 +15,39 @@ const router = Router();
 /** Parse form body so key/uuid are in req.body even if app-level parser is missing or runs after /connect */
 router.use(express.urlencoded({ extended: true }));
 
+/** Error payload: always "error" string and "data" with token/rng so tool .get<std::string>() never sees null */
 function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
+  if (body.success === false) {
+    body = {
+      success: false,
+      error: typeof body.error === 'string' ? body.error : 'Error',
+      data: body.data && body.data.token != null ? body.data : { token: '', rng: 0, EXP: '' }
+    };
+  }
   res.status(status).end(JSON.stringify(body));
 }
 
-/** Get key and uuid from req.body or req.query (body preferred for POST). */
+/** Parse form string "key=val&uuid=val2" into object */
+function parseFormBody(str) {
+  const out = {};
+  if (typeof str !== 'string') return out;
+  for (const part of str.split('&')) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    const k = decodeURIComponent(part.slice(0, eq).replace(/\+/g, ' ')).trim();
+    const v = decodeURIComponent(part.slice(eq + 1).replace(/\+/g, ' ')).trim();
+    if (k) out[k] = v;
+  }
+  return out;
+}
+
+/** Get key and uuid from req.body, req.query, or raw body string (Vercel may pass body as string). */
 function getKeyAndUuid(req) {
-  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  let body = req.body && typeof req.body === 'object' ? req.body : {};
+  if (typeof req.body === 'string') {
+    body = { ...body, ...parseFormBody(req.body) };
+  }
   const key = (body.key ?? body.Key ?? req.query?.key ?? req.query?.Key ?? '').toString().trim();
   const uuid = (body.uuid ?? body.UUID ?? req.query?.uuid ?? req.query?.UUID ?? '').toString().trim();
   return { key, uuid };
@@ -44,7 +69,7 @@ router.post(['/', '/:slug'], async (req, res) => {
     const { key, uuid } = getKeyAndUuid(req);
 
     if (!key) {
-      return sendJson(res, 400, { success: false, error: 'Invalid key' });
+      return sendJson(res, 400, { success: false, error: 'Missing key' });
     }
 
     const seller = await getSellerBySlug(slug);
