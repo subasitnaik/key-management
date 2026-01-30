@@ -23,6 +23,23 @@ router.use((req, _res, next) => {
   next();
 });
 
+/** When body is still missing, read raw stream (Vercel/Express may leave body in stream). Must run before urlencoded. */
+router.use((req, res, next) => {
+  if (req._connectBody || req._connectRawBody) return next();
+  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return next();
+  if (!req.readable || typeof req.on !== 'function') return next();
+  const chunks = [];
+  req.on('data', (chunk) => chunks.push(chunk));
+  req.on('end', () => {
+    req._connectRawBody = Buffer.concat(chunks).toString('utf8');
+    next();
+  });
+  req.on('error', (err) => {
+    console.error('Connect body stream error:', err);
+    next();
+  });
+});
+
 router.use(express.urlencoded({ extended: true }));
 
 /** Error payload: tool reads result["reason"] (StrEnc decodes to "reason"), not "error". All string keys non-null. */
