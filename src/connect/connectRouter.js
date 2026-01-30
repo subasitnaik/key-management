@@ -25,7 +25,7 @@ router.use((req, _res, next) => {
 
 router.use(express.urlencoded({ extended: true }));
 
-/** Error payload: every key the tool might read must be a string (never null). Include all case variants. */
+/** Error payload: tool reads result["reason"] (StrEnc decodes to "reason"), not "error". All string keys non-null. */
 function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   if (body.success === false) {
@@ -35,6 +35,7 @@ function sendJson(res, status, body) {
     const expStr = (data.EXP != null && data.EXP !== '') ? String(data.EXP) : ' ';
     body = {
       success: false,
+      reason: errStr,
       error: errStr,
       Error: errStr,
       message: errStr,
