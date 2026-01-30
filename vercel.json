@@ -9,6 +9,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/connect/:slug", "destination": "/api/connect?slug=:slug" },
     { "source": "/", "destination": "/api" },
     { "source": "/(.*)", "destination": "/api?path=$1" }
   ]
