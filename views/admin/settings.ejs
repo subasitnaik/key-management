@@ -25,10 +25,7 @@
     <% } %>
     <% if (typeof error !== 'undefined' && error) { %>
     <div class="card error-msg" role="alert">
-      <% if (error === 'current') { %>Current password is wrong.<% } %>
-      <% else if (error === 'nochange') { %>Enter a new username and/or password to change.<% } %>
-      <% else if (error === 'duplicate') { %>That username is already taken.<% } %>
-      <% else { %>Update failed. Try again.<% } %>
+      <% if (error === 'current') { %>Current password is wrong.<% } else if (error === 'nochange') { %>Enter a new username and/or password to change.<% } else if (error === 'duplicate') { %>That username is already taken.<% } else { %>Update failed. Try again.<% } %>
     </div>
     <% } %>
     <div class="card">
