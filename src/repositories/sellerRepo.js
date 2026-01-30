@@ -34,7 +34,19 @@ export async function updateSeller(id, updates) {
     .from('sellers')
     .update(payload)
     .eq('id', id);
-  if (error) throw error;
+  if (error) {
+    // If cycle_started_at (or other new column) doesn't exist yet (migration not run), retry without it
+    if (payload.cycle_started_at !== undefined) {
+      const { cycle_started_at: _, ...rest } = payload;
+      const { error: err2 } = await getSupabase()
+        .from('sellers')
+        .update(rest)
+        .eq('id', id);
+      if (err2) throw err2;
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function getAllSellers() {

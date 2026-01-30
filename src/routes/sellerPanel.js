@@ -87,7 +87,11 @@ router.post('/', requireSeller, async (req, res) => {
   }
   if (action === 'reset') {
     await getSupabase().from('subscriptions').delete().eq('seller_id', req.session.sellerId);
-    await updateSeller(req.session.sellerId, { cycle_started_at: new Date().toISOString() });
+    try {
+      await updateSeller(req.session.sellerId, { cycle_started_at: new Date().toISOString() });
+    } catch (_) {
+      // cycle_started_at column may not exist yet (migration not run)
+    }
     return res.redirect(303, panelSellerUrl(req, '/panel/seller', 'reset=done'));
   }
   return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
@@ -249,7 +253,11 @@ router.post('/maintenance', requireSeller, async (req, res) => {
 router.post('/reset', requireSeller, async (req, res) => {
   const sellerId = req.session.sellerId;
   await getSupabase().from('subscriptions').delete().eq('seller_id', sellerId);
-  await updateSeller(sellerId, { cycle_started_at: new Date().toISOString() });
+  try {
+    await updateSeller(sellerId, { cycle_started_at: new Date().toISOString() });
+  } catch (_) {
+    // cycle_started_at column may not exist yet (migration not run)
+  }
   res.redirect('/panel/seller?reset=done');
 });
 
