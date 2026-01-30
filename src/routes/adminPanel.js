@@ -7,6 +7,8 @@ import bcrypt from 'bcryptjs';
 import { requireMasterAdmin } from '../middleware/auth.js';
 import { verifyMasterAdmin } from '../repositories/masterAdminRepo.js';
 import { getAllSellers, getSellerById, createSeller, updateSeller } from '../repositories/sellerRepo.js';
+import { getActiveSubscriptionsCount } from '../repositories/subscriptionRepo.js';
+import { getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
 import { addLedgerEntry } from '../repositories/creditLedgerRepo.js';
 import { setTelegramWebhook } from '../services/telegramWebhook.js';
 
@@ -36,7 +38,17 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/', requireMasterAdmin, async (req, res) => {
-  res.render('admin/dashboard');
+  const sellers = await getAllSellers();
+  const sellersWithStats = await Promise.all(
+    (sellers || []).map(async (s) => {
+      const [activeUsers, earnedAmount] = await Promise.all([
+        getActiveSubscriptionsCount(s.id),
+        getEarnedAmountBySeller(s.id),
+      ]);
+      return { seller: s, activeUsers: activeUsers ?? 0, earnedAmount: earnedAmount ?? 0 };
+    })
+  );
+  res.render('admin/dashboard', { sellersWithStats: sellersWithStats || [] });
 });
 
 router.get('/sellers', requireMasterAdmin, async (req, res) => {

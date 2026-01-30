@@ -356,6 +356,37 @@ h1 {
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+/* Admin dashboard: sellers list with active users & earning */
+.dashboard-seller-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dashboard-seller-list .seller-list-header {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.dashboard-seller-list .seller-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 1rem;
+  align-items: center;
+}
+@media (max-width: 640px) {
+  .dashboard-seller-list .seller-list-header,
+  .dashboard-seller-list .seller-row {
+    grid-template-columns: 1fr auto;
+  }
+  .dashboard-seller-list .seller-row span:nth-child(3),
+  .dashboard-seller-list .seller-list-header span:nth-child(3) { display: none; }
+}
+
 .connect-link-row {
   display: flex;
   flex-wrap: wrap;
