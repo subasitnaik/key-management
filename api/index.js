@@ -37,12 +37,25 @@ export default async function handler(req, res) {
   const pathParam = query.path ?? parsed.query?.path;
   const path = pathParam ? '/' + String(pathParam).replace(/^\/+/, '') : '/';
 
-  // For POST /connect/*, read body and attach so Express connect router gets key/uuid
-  if (req.method === 'POST' && path.startsWith('/connect') && (req.readable || typeof req.on === 'function')) {
+  // For POST /connect/*, get body so Express connect router gets key/uuid.
+  // Try: Vercel req.body, then req.text(), then Node stream. Preserve in _incomingBody for Express.
+  if (req.method === 'POST' && path.startsWith('/connect')) {
     try {
-      if (!req.body || (typeof req.body === 'object' && Object.keys(req.body || {}).length === 0)) {
+      let parsed = null;
+      if (req.body && typeof req.body === 'object' && (req.body.key ?? req.body.Key ?? req.body.uuid !== undefined)) {
+        parsed = req.body;
+      } else if (typeof req.body === 'string' && req.body.length > 0) {
+        parsed = parseFormBody(req.body);
+      } else if (typeof req.text === 'function') {
+        const raw = await req.text();
+        parsed = parseFormBody(raw || '');
+      } else if (typeof req.on === 'function') {
         const raw = await getRawBody(req);
-        req.body = parseFormBody(raw);
+        parsed = parseFormBody(raw || '');
+      }
+      if (parsed && typeof parsed === 'object') {
+        req.body = parsed;
+        req._incomingBody = parsed;
       }
     } catch (e) {
       console.error('Connect body read error:', e);
