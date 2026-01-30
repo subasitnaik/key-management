@@ -67,6 +67,11 @@
           <label>Private group link</label>
           <input name="private_group_link" type="text" value="<%= seller ? (seller.private_group_link || '') : '' %>">
         </div>
+        <div class="form-group">
+          <label>Payment QR code (image URL)</label>
+          <input name="payment_qr_url" type="url" value="<%= seller ? (seller.payment_qr_url || '') : '' %>" placeholder="https://example.com/qr.png">
+          <p class="text-dim" style="margin-top:0.25rem;font-size:0.85rem;">Public URL to your payment QR image. The bot sends this to users after they choose a plan.</p>
+        </div>
         <button type="submit" class="btn">Save</button>
       </form>
     </div>
