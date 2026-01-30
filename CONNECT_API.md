@@ -1,61 +1,71 @@
-# Connect API (key validation for tools)
+# Connect API (Android tools: Finisher Tool, PRESIDENT Tool)
 
-Used by Android/tools (e.g. Login.h) to validate license keys.
-
-**If the tool writes error.txt with `parse_error.101 ... invalid literal; last read: 'no'` and `{notinlist}`:**  
-The app returned non-JSON (e.g. HTML "Not Found" or plain "no"). Ensure this router is mounted at `/connect` so every request to `/connect/:slug` returns JSON. GET and POST both return JSON; 404 must not be used for `/connect/:slug`.
+This API is used by the **Finisher Tool** and **PRESIDENT Tool** (and any compatible Android app) to validate keys. Both tools use the same contract.
 
 ## Endpoint
 
 - **POST** `/connect/:slug`  
-  Example: `POST https://key-management-five.vercel.app/connect/subasit`
+  `:slug` = seller slug (from the panel connect link, e.g. `https://your-domain.com/connect/mystore` → slug = `mystore`).
 
 ## Request
 
-- **Body** (JSON or `application/x-www-form-urlencoded`):
-  - `key` (required): license key
-  - `uuid` (optional): device UUID (from HWID); used for device binding
+- **Content-Type:** `application/x-www-form-urlencoded`
+- **Body:** `key=<license_key>&uuid=<device_uuid>`
+  - `key` – license key (from panel / Telegram).
+  - `uuid` – device UUID derived by the app from Android ID + model + brand (same format as PRESIDENT/Finisher).
 
-- **Headers**: `Content-Type: application/json` or form encoding.
-
-## Response
-
-**Success (200):**
+## Success response (200)
 
 ```json
 {
-  "status": true,
   "success": true,
-  "valid": true,
   "data": {
-    "token": "<license_key>",
-    "rng": <unix_timestamp>,
-    "EXP": "<expiry_date_dd/mm/yyyy>"
+    "token": "1",
+    "rng": 1738166400
   }
 }
 ```
 
-**Failure (200):**
+- `rng` = server Unix timestamp. The tool checks `rng + 30 > time(0)` to avoid stale responses.
+- PRESIDENT Tool also reads `data.EXP` (expiry string) if present; the backend may include it for compatibility.
+
+## Error response (4xx/5xx)
 
 ```json
 {
-  "status": false,
   "success": false,
-  "valid": false,
-  "message": "<error_message>"
+  "error": "Invalid key"
 }
 ```
 
-Tools typically check `result["status"] == true` and `result["data"]["rng"] + 30 > time(0)` (30s clock skew).
+Common `error` values: `Missing slug`, `Invalid key`, `Invalid link`, `Key expired`, `Under maintenance`, `Seller suspended`, `Device limit reached`, `Use POST with key and uuid`, `Server error`.
 
-## Mounting
+## Mounting in the app
 
-In your main app (e.g. `app.js` or `api/index.js`):
+1. **Body parser**  
+   The Connect route uses `req.body.key` and `req.body.uuid`. Ensure the main app parses URL-encoded bodies **before** the connect router, e.g.:
 
-```js
-import connectRouter from './routes/connectRouter.js';
-// Ensure body is parsed (express.json() and express.urlencoded())
-app.use('/connect', connectRouter);
-```
+   ```js
+   import express from 'express';
+   app.use(express.urlencoded({ extended: true }));
+   ```
 
-So that `POST /connect/:slug` is handled by this router.
+2. **Connect router**  
+   Mount the connect router at `/connect`:
+
+   ```js
+   import connectRouter from './src/routes/connectRouter.js';
+   app.use('/connect', connectRouter);
+   ```
+
+3. **Order**  
+   Mount `/connect` so it is not shadowed by other routes (e.g. mount it before a catch-all or `/panel`).
+
+## Finisher Tool URL
+
+The Finisher Tool source uses a hardcoded URL (e.g. `https://teamruthless.ai-new.xyz/connect`). To use your panel:
+
+1. Rebuild the app with the connect URL set to: `https://<your-panel-domain>/connect/<seller_slug>`.
+2. Or use a single slug: e.g. `https://<your-panel-domain>/connect/finisher` and create a seller with slug `finisher` in the admin panel.
+
+The seller’s **Connect link** in the seller dashboard is exactly this URL (with that seller’s slug).

@@ -1,63 +1,63 @@
 /**
- * Sellers: verify (login), get by id, update, getAll, create.
+ * Seller repository: get by id/slug, verify, create, update.
  */
 
 import bcrypt from 'bcryptjs';
 import { getSupabase } from '../db/supabase.js';
 
-export async function verifySeller(username, password) {
-  if (!username || !password) return null;
-  const { data: seller, error } = await getSupabase()
-    .from('sellers')
-    .select('*')
-    .eq('username', String(username).trim())
-    .eq('suspended', 0)
-    .maybeSingle();
-  if (error || !seller) return null;
-  const ok = await bcrypt.compare(String(password), seller.password_hash || '');
-  return ok ? seller : null;
-}
-
 export async function getSellerById(id) {
+  if (id == null || id === '') return null;
   const { data, error } = await getSupabase()
     .from('sellers')
     .select('*')
-    .eq('id', id)
-    .single();
-  if (error && error.code !== 'PGRST116') throw error;
+    .eq('id', parseInt(id, 10))
+    .maybeSingle();
+  if (error) {
+    console.error('getSellerById error:', error);
+    return null;
+  }
   return data;
 }
 
 export async function getSellerBySlug(slug) {
+  if (!slug || typeof slug !== 'string') return null;
   const { data, error } = await getSupabase()
     .from('sellers')
     .select('*')
-    .eq('slug', String(slug).trim())
-    .eq('suspended', 0)
+    .eq('slug', slug.trim())
     .maybeSingle();
-  if (error) throw error;
+  if (error) {
+    console.error('getSellerBySlug error:', error);
+    return null;
+  }
   return data;
 }
 
-export async function updateSeller(id, updates) {
-  const payload = { ...updates, updated_at: new Date().toISOString() };
-  const { error } = await getSupabase()
+export async function verifySeller(username, password) {
+  if (!username || !password) return null;
+  const { data, error } = await getSupabase()
     .from('sellers')
-    .update(payload)
-    .eq('id', id);
+    .select('*')
+    .eq('username', username.trim())
+    .maybeSingle();
+  if (error || !data) return null;
+  if (data.suspended) return null;
+  const ok = bcrypt.compareSync(password, data.password_hash || '');
+  return ok ? data : null;
+}
+
+export async function updateSeller(id, updates) {
+  const { data, error } = await getSupabase()
+    .from('sellers')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', parseInt(id, 10))
+    .select()
+    .maybeSingle();
   if (error) {
-    // If cycle_started_at (or other new column) doesn't exist yet (migration not run), retry without it
-    if (payload.cycle_started_at !== undefined) {
-      const { cycle_started_at: _, ...rest } = payload;
-      const { error: err2 } = await getSupabase()
-        .from('sellers')
-        .update(rest)
-        .eq('id', id);
-      if (err2) throw err2;
-      return;
-    }
-    throw error;
+    console.error('updateSeller error:', error);
+    return null;
   }
+  return data;
 }
 
 export async function getAllSellers() {
@@ -65,15 +65,28 @@ export async function getAllSellers() {
     .from('sellers')
     .select('*')
     .order('id', { ascending: true });
-  if (error) throw error;
+  if (error) {
+    console.error('getAllSellers error:', error);
+    return [];
+  }
   return data || [];
 }
 
-export async function createSeller(row) {
+export async function createSeller({ slug, username, password_hash, telegram_username, telegram_bot_token, ccpu, query_channel_enabled, query_group_link, private_group_link }) {
   const { data, error } = await getSupabase()
     .from('sellers')
-    .insert(row)
-    .select('id, slug, username')
+    .insert({
+      slug: slug.trim(),
+      username: username.trim(),
+      password_hash,
+      telegram_username: telegram_username?.trim() || null,
+      telegram_bot_token: telegram_bot_token?.trim() || null,
+      ccpu: ccpu != null ? parseInt(ccpu, 10) : 30,
+      query_channel_enabled: query_channel_enabled ? 1 : 0,
+      query_group_link: query_group_link?.trim() || null,
+      private_group_link: private_group_link?.trim() || null
+    })
+    .select()
     .single();
   if (error) throw error;
   return data;
