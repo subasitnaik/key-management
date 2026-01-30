@@ -89,7 +89,7 @@ export function createApp() {
   app.use('/api/payment', paymentApi);
   app.use('/api/telegram/webhook', telegramWebhook);
 
-  app.get('/', (req, res) => res.redirect('/panel/admin'));
+  app.get('/', (req, res) => res.redirect('/panel/seller'));
 
   app.use((err, req, res, next) => {
     console.error('Server error:', err?.message || err);
