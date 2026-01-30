@@ -86,9 +86,12 @@ function parseFormBody(str) {
   return out;
 }
 
-/** Get key and uuid from req.body, preserved body, raw body, or query (Vercel may set body before Express). */
+/** Get key and uuid from req.body, preserved body, raw body, _incomingBody (api/index), or query. */
 function getKeyAndUuid(req) {
   let body = req.body && typeof req.body === 'object' ? req.body : {};
+  if (Object.keys(body).length === 0 && req._incomingBody && typeof req._incomingBody === 'object') {
+    body = req._incomingBody;
+  }
   if (Object.keys(body).length === 0 && req._connectBody) {
     body = req._connectBody;
   }
@@ -176,11 +179,9 @@ router.post(['/', '/:slug'], async (req, res) => {
     const rng = Math.floor(Date.now() / 1000);
     const data = {
       token: '1',
-      rng
+      rng,
+      EXP: expiresAt ? (expiresAt.toISOString ? expiresAt.toISOString() : String(expiresAt)) : ' '
     };
-    if (expiresAt) {
-      data.EXP = expiresAt.toISOString ? expiresAt.toISOString() : String(expiresAt);
-    }
 
     return sendJson(res, 200, { success: true, data });
   } catch (err) {

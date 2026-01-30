@@ -1,6 +1,7 @@
 /**
  * Vercel serverless entry: all requests rewritten here. Path in ?path= for Express.
- * For /connect requests, read POST body and attach to req.body so Express gets key/uuid.
+ * Do NOT read the request stream here — Express body-parser must read it, or we get "stream is not readable".
+ * Only copy req.body / req.text() into _incomingBody when Vercel/Web API already provided body (no stream read).
  */
 import { createApp } from '../app.js';
 import { parse } from 'url';
@@ -22,43 +23,25 @@ function parseFormBody(str) {
   return out;
 }
 
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    req.on('error', reject);
-  });
-}
-
 export default async function handler(req, res) {
   const parsed = parse(req.url || '/', true);
   const query = typeof req.query === 'object' && req.query !== null ? { ...req.query } : { ...parsed.query };
   const pathParam = query.path ?? parsed.query?.path;
   const path = pathParam ? '/' + String(pathParam).replace(/^\/+/, '') : '/';
 
-  // For POST /connect/*, get body so Express connect router gets key/uuid.
-  // Try: Vercel req.body, then req.text(), then Node stream. Preserve in _incomingBody for Express.
+  // If Vercel or Web API already set body (no stream read), preserve for Express so urlencoded doesn't overwrite.
   if (req.method === 'POST' && path.startsWith('/connect')) {
     try {
-      let parsed = null;
       if (req.body && typeof req.body === 'object' && (req.body.key ?? req.body.Key ?? req.body.uuid !== undefined)) {
-        parsed = req.body;
+        req._incomingBody = req.body;
       } else if (typeof req.body === 'string' && req.body.length > 0) {
-        parsed = parseFormBody(req.body);
+        req._incomingBody = parseFormBody(req.body);
       } else if (typeof req.text === 'function') {
         const raw = await req.text();
-        parsed = parseFormBody(raw || '');
-      } else if (typeof req.on === 'function') {
-        const raw = await getRawBody(req);
-        parsed = parseFormBody(raw || '');
-      }
-      if (parsed && typeof parsed === 'object') {
-        req.body = parsed;
-        req._incomingBody = parsed;
+        if (raw && raw.length > 0) req._incomingBody = parseFormBody(raw);
       }
     } catch (e) {
-      console.error('Connect body read error:', e);
+      console.error('Connect body preserve error:', e);
     }
   }
 
