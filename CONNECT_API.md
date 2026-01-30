@@ -10,9 +10,11 @@ This API is used by the **Finisher Tool** and **PRESIDENT Tool** (and any compat
 ## Request
 
 - **Content-Type:** `application/x-www-form-urlencoded`
-- **Body:** `key=<license_key>&uuid=<device_uuid>`
-  - `key` – license key (from panel / Telegram).
-  - `uuid` – device UUID derived by the app from Android ID + model + brand (same format as PRESIDENT/Finisher).
+- **Body (accepted names):**
+  - License key: `key` or `user_key` (Finisher Tool sends `user_key`).
+  - Device UUID: `uuid` or `serial` (Finisher Tool sends `serial`).
+- **Example (Finisher Tool):** `game=PUBG&user_key=<license_key>&serial=<device_uuid>`
+- **Example (alternate):** `key=<license_key>&uuid=<device_uuid>`
 
 ## Success response (200)
 
@@ -69,3 +71,17 @@ The Finisher Tool source uses a hardcoded URL (e.g. `https://teamruthless.ai-new
 2. Or use a single slug: e.g. `https://<your-panel-domain>/connect/finisher` and create a seller with slug `finisher` in the admin panel.
 
 The seller’s **Connect link** in the seller dashboard is exactly this URL (with that seller’s slug).
+
+## Troubleshooting: parse error / "notinlist"
+
+If the tool shows a **JSON parse error** (e.g. `parse_error.101 ... invalid literal; last read: 'no'`) or **"notinlist"**:
+
+1. **Wrong URL** – The response is coming from a server that returns **plain text** (e.g. `"no"` or `"notinlist"`) instead of JSON. The legacy PHP panel (`login.php`) returns `"notinlist"`.  
+   **Fix:** Point the tool at the **Node/Vercel Connect API**, e.g. `https://<your-vercel-app>.vercel.app/connect/<seller_slug>`, not at the PHP backend.
+
+2. **Connect route not mounted** – If the Connect router is not mounted at `/connect` in your Node app, requests to `/connect/...` may hit a 404 or another handler that returns HTML or plain text.  
+   **Fix:** Mount the connect router as in “Mounting in the app” above, and ensure `/connect` is registered **before** any catch-all route.
+
+3. **Body not parsed** – The Connect router now includes its own `express.urlencoded` middleware, so `key` and `uuid` are parsed from the POST body when the request hits this router. If you still get “Invalid key”, confirm the tool sends `key=...&uuid=...` as form-urlencoded.
+
+The Connect API **always** responds with JSON (`{ "success": true, "data": {...} }` or `{ "success": false, "error": "..." }`). It never returns plain text like `"no"` or `"notinlist"`.

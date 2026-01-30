@@ -54,24 +54,29 @@ async function handleConnect(req, res, path, query) {
     return;
   }
 
-  let key = (query.key ?? query.Key ?? '').toString().trim();
-  let uuid = (query.uuid ?? query.UUID ?? '').toString().trim();
+  // Tool sends: query (?key=&uuid=) and/or body; Finisher Tool body format: game=PUBG&user_key=%s&serial=%s
+  let key = (query.key ?? query.Key ?? query.user_key ?? '').toString().trim();
+  let uuid = (query.uuid ?? query.UUID ?? query.serial ?? query.Serial ?? '').toString().trim();
   if (!key || !uuid) {
     let raw = '';
     try {
       if (req.body && typeof req.body === 'string') raw = req.body;
-      else if (req.body && typeof req.body === 'object' && (req.body.key ?? req.body.Key)) {
-        key = (req.body.key ?? req.body.Key ?? key).toString().trim();
-        uuid = (req.body.uuid ?? req.body.UUID ?? uuid).toString().trim();
-      } else if (typeof req.text === 'function') raw = await req.text();
-      else if (typeof req.on === 'function') raw = await getRawBody(req);
+      else if (req.body && typeof req.body === 'object') {
+        const b = req.body;
+        key = (b.key ?? b.Key ?? b.user_key ?? key).toString().trim();
+        uuid = (b.uuid ?? b.UUID ?? b.serial ?? b.Serial ?? uuid).toString().trim();
+      }
+      if (!key || !uuid) {
+        if (typeof req.text === 'function') raw = raw || await req.text();
+        else if (typeof req.on === 'function') raw = raw || await getRawBody(req);
+      }
     } catch (e) {
       console.error('Connect body read error:', e);
     }
     if (raw) {
       const body = parseFormBody(raw);
-      key = (body.key ?? body.Key ?? key).toString().trim();
-      uuid = (body.uuid ?? body.UUID ?? uuid).toString().trim();
+      key = (body.key ?? body.Key ?? body.user_key ?? key).toString().trim();
+      uuid = (body.uuid ?? body.UUID ?? body.serial ?? uuid).toString().trim();
     }
   }
 
