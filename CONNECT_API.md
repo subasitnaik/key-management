@@ -2,6 +2,9 @@
 
 Used by Android/tools (e.g. Login.h) to validate license keys.
 
+**If the tool writes error.txt with `parse_error.101 ... invalid literal; last read: 'no'` and `{notinlist}`:**  
+The app returned non-JSON (e.g. HTML "Not Found" or plain "no"). Ensure this router is mounted at `/connect` so every request to `/connect/:slug` returns JSON. GET and POST both return JSON; 404 must not be used for `/connect/:slug`.
+
 ## Endpoint
 
 - **POST** `/connect/:slug`  

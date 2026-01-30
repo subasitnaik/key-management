@@ -1,11 +1,11 @@
 /**
  * Connect API: key validation for Android/tools.
  * POST /connect/:slug with body { key, uuid } (JSON or application/x-www-form-urlencoded).
+ * Always returns JSON so the tool never gets HTML or plain "no"/"Not Found" (which cause parse_error.101).
  *
  * Tool contract (e.g. Login.h):
  * - Request: POST, Content-Type application/json or form, body: key=<license_key>, uuid=<device_uuid>
  * - Success: { "status": true, "data": { "token": "...", "rng": <unix_ts>, "EXP": "<expiry_str>" } }
- *   (also "success" and "valid" for compatibility)
  * - Failure: { "status": false, "message": "<error>" }
  */
 
@@ -14,6 +14,8 @@ import { getSellerBySlug } from '../repositories/sellerRepo.js';
 import { getSupabase } from '../db/supabase.js';
 
 const router = Router();
+
+const JSON_HEADER = { 'Content-Type': 'application/json; charset=utf-8' };
 
 function parseKeyAndUuid(req) {
   const body = req.body || {};
@@ -25,6 +27,7 @@ function parseKeyAndUuid(req) {
 }
 
 function sendError(res, message, statusCode = 200) {
+  res.set(JSON_HEADER);
   res.status(statusCode).json({
     status: false,
     success: false,
@@ -34,6 +37,7 @@ function sendError(res, message, statusCode = 200) {
 }
 
 function sendSuccess(res, data) {
+  res.set(JSON_HEADER);
   res.status(200).json({
     status: true,
     success: true,
@@ -46,14 +50,25 @@ function sendSuccess(res, data) {
   });
 }
 
+// GET /connect/:slug -> always JSON (avoids 404 HTML "Not Found" which causes parse_error.101 in tool)
+router.get('/:slug', (req, res) => {
+  res.set(JSON_HEADER);
+  res.status(200).json({
+    status: false,
+    success: false,
+    valid: false,
+    message: 'Use POST with key and uuid in body',
+  });
+});
+
 router.post('/:slug', async (req, res) => {
-  const slug = (req.params.slug || '').trim();
-  if (!slug) return sendError(res, 'Missing slug');
-
-  const { key, uuid } = parseKeyAndUuid(req);
-  if (!key) return sendError(res, 'Missing key');
-
   try {
+    const slug = (req.params.slug || '').trim();
+    if (!slug) return sendError(res, 'Missing slug');
+
+    const { key, uuid } = parseKeyAndUuid(req);
+    if (!key) return sendError(res, 'Missing key');
+
     const seller = await getSellerBySlug(slug);
     if (!seller) return sendError(res, 'Invalid link');
 
@@ -80,7 +95,6 @@ router.post('/:slug', async (req, res) => {
     if (existingUuid && uuid && existingUuid !== uuid) {
       const maxDevices = Math.max(1, parseInt(sub.max_devices, 10) || 1);
       if (maxDevices <= 1) return sendError(res, 'Key in use on another device');
-      // If max_devices > 1 we could allow multiple uuids; schema has single uuid so we only bind first device
       return sendError(res, 'Key in use on another device');
     }
 
@@ -103,7 +117,7 @@ router.post('/:slug', async (req, res) => {
     });
   } catch (e) {
     console.error('Connect error:', e?.message || e);
-    return sendError(res, 'Server error');
+    if (!res.headersSent) sendError(res, 'Server error');
   }
 });
 
