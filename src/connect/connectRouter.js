@@ -12,17 +12,36 @@ import { getSupabase } from '../db/supabase.js';
 
 const router = Router();
 
-/** Parse form body so key/uuid are in req.body even if app-level parser is missing or runs after /connect */
+/** Preserve body before any parser: Vercel may set req.body before Express runs; Express urlencoded can overwrite it */
+router.use((req, _res, next) => {
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    req._connectBody = { ...req.body };
+  }
+  if (typeof req.body === 'string' || Buffer.isBuffer(req.body)) {
+    req._connectRawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : req.body;
+  }
+  next();
+});
+
 router.use(express.urlencoded({ extended: true }));
 
-/** Error payload: always "error" string and "data" with token/rng so tool .get<std::string>() never sees null */
+/** Error payload: all string fields non-null so tool .get<std::string>() never throws. Send error under multiple keys. */
 function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json');
   if (body.success === false) {
+    const errStr = typeof body.error === 'string' ? body.error : 'Error';
+    const data = body.data && body.data.token !== undefined ? body.data : {};
     body = {
       success: false,
-      error: typeof body.error === 'string' ? body.error : 'Error',
-      data: body.data && body.data.token != null ? body.data : { token: '', rng: 0, EXP: '' }
+      error: errStr,
+      message: errStr,
+      err: errStr,
+      msg: errStr,
+      data: {
+        token: (data.token != null && data.token !== '') ? String(data.token) : ' ',
+        rng: typeof data.rng === 'number' ? data.rng : 0,
+        EXP: (data.EXP != null && data.EXP !== '') ? String(data.EXP) : ' '
+      }
     };
   }
   res.status(status).end(JSON.stringify(body));
@@ -42,13 +61,16 @@ function parseFormBody(str) {
   return out;
 }
 
-/** Get key and uuid from req.body, req.query, or raw body string (Vercel may pass body as string). */
+/** Get key and uuid from req.body, preserved body, raw body, or query (Vercel may set body before Express). */
 function getKeyAndUuid(req) {
   let body = req.body && typeof req.body === 'object' ? req.body : {};
-  if (typeof req.body === 'string') {
-    body = { ...body, ...parseFormBody(req.body) };
+  if (Object.keys(body).length === 0 && req._connectBody) {
+    body = req._connectBody;
   }
-  const key = (body.key ?? body.Key ?? req.query?.key ?? req.query?.Key ?? '').toString().trim();
+  if (Object.keys(body).length === 0 && (typeof req.body === 'string' || req._connectRawBody)) {
+    body = { ...body, ...parseFormBody(req._connectRawBody || req.body || '') };
+  }
+  const key = (body.key ?? body.Key ?? body.password ?? body.Password ?? req.query?.key ?? req.query?.Key ?? '').toString().trim();
   const uuid = (body.uuid ?? body.UUID ?? req.query?.uuid ?? req.query?.UUID ?? '').toString().trim();
   return { key, uuid };
 }
