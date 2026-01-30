@@ -26,6 +26,32 @@ function normalizeUsername(u) {
   return (u || '').toLowerCase().replace(/^@/, '').trim();
 }
 
+/** Escape for Telegram HTML so we can wrap in <s>...</s> for strikethrough. */
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** Edit the payment-request message to strikethrough, add status suffix, and remove buttons. */
+async function markPaymentMessageProcessed(ctx, statusLabel) {
+  const msg = ctx.callbackQuery?.message;
+  if (!msg?.text) return;
+  try {
+    const chatId = msg.chat.id;
+    const messageId = msg.message_id;
+    const suffix = statusLabel ? `\n\n${escapeHtml(statusLabel)}` : '';
+    const strikethroughText = `<s>${escapeHtml(msg.text)}</s>${suffix}`;
+    await ctx.telegram.editMessageText(chatId, messageId, undefined, strikethroughText, {
+      parse_mode: 'HTML',
+      reply_markup: { inline_keyboard: [] },
+    });
+  } catch (e) {
+    console.error('markPaymentMessageProcessed:', e?.message || e);
+  }
+}
+
 function isSellerTelegramUser(seller, from) {
   if (!seller?.telegram_username) return false;
   const sellerU = normalizeUsername(seller.telegram_username);
@@ -217,6 +243,7 @@ export function registerBotHandlers(bot, sellerId) {
         console.error('Notify user after accept:', e);
       }
     }
+    await markPaymentMessageProcessed(ctx, '✅ Accepted');
     await ctx.answerCbQuery('Accepted');
     await ctx.reply('Payment accepted. User notified.');
   });
@@ -234,6 +261,7 @@ export function registerBotHandlers(bot, sellerId) {
         await b.telegram.sendMessage(user.telegram_user_id, 'Payment rejected. Try again or contact seller.');
       }
     }
+    await markPaymentMessageProcessed(ctx, '❌ Rejected');
     await ctx.answerCbQuery('Rejected');
     await ctx.reply('Rejected.');
   });
@@ -244,6 +272,7 @@ export function registerBotHandlers(bot, sellerId) {
     if (!pr || pr.seller_id !== sellerId || pr.status !== 'pending') return ctx.answerCbQuery('Invalid');
     await blockUser(pr.user_id, sellerId);
     await updatePaymentRequest(prId, { status: 'blocked' });
+    await markPaymentMessageProcessed(ctx, '🚫 Blocked');
     await ctx.answerCbQuery('Blocked');
     await ctx.reply('User blocked.');
   });
