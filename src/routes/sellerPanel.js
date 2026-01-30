@@ -1,5 +1,5 @@
 /**
- * Seller panel: login, dashboard, keys, plans, payments, maintenance, reset.
+ * Seller panel: login, dashboard, keys, plans, blocked, maintenance, reset.
  */
 
 import { Router } from 'express';
@@ -7,7 +7,8 @@ import { requireSeller } from '../middleware/auth.js';
 import { verifySeller, getSellerById, updateSeller } from '../repositories/sellerRepo.js';
 import { getSubscriptionsBySeller, getActiveSubscriptionsCount } from '../repositories/subscriptionRepo.js';
 import { getPlansBySeller, getPlanById, createPlan, updatePlan, deletePlan } from '../repositories/planRepo.js';
-import { getPendingBySeller, getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
+import { getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
+import sellerBlockedRouter from './sellerBlocked.js';
 import { getLedgerBySeller } from '../repositories/creditLedgerRepo.js';
 import { createSubscription, deleteSubscription } from '../repositories/subscriptionRepo.js';
 import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
@@ -232,10 +233,7 @@ router.post('/plans/:id/delete', requireSeller, async (req, res) => {
   return res.redirect(303, '/panel/seller/plans?deleted=1');
 });
 
-router.get('/payments', requireSeller, async (req, res) => {
-  const pending = await getPendingBySeller(req.session.sellerId);
-  res.render('seller/payments', { pending: pending || [] });
-});
+router.use(sellerBlockedRouter);
 
 router.post('/maintenance', requireSeller, async (req, res) => {
   const seller = await getSellerById(req.session.sellerId);
