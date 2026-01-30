@@ -149,10 +149,13 @@ export function registerBotHandlers(bot, sellerId) {
       success_count: successCount,
     });
 
+    const plan = await getSupabase().from('plans').select('name, price').eq('id', planId).single().then((r) => r.data);
+    const planLabel = plan ? (plan.name ? `${plan.name} - ₹${plan.price}` : `₹${plan.price}`) : `Plan ID: ${planId}`;
+
     const acceptData = `pay_accept:${pr.id}`;
     const rejectData = `pay_reject:${pr.id}`;
     const blockData = `pay_block:${pr.id}`;
-    const text = `Payment Request\nUser: ${username}\nPlan ID: ${planId}\nUTR: ${utr}\nAttempts: ${attempts}\nSuccess: ${successCount}\n\n[Accept] [Reject] [Block]`;
+    const text = `Payment Request\nUser: ${username}\nPlan: ${planLabel}\nUTR: ${utr}\nAttempts: ${attempts}\nSuccess: ${successCount}`;
     const keyboard = Markup.inlineKeyboard([
       [Markup.button.callback('Accept', acceptData), Markup.button.callback('Reject', rejectData), Markup.button.callback('Block', blockData)],
     ]);
