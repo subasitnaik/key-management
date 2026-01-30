@@ -155,16 +155,21 @@ router.post('/:slug?', async (req, res) => {
     }
 
     const maxDevices = Math.max(1, parseInt(sub.max_devices, 10) || 1);
-    const currentUuid = (sub.uuid || '').trim();
+    const currentUuids = (sub.uuid || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     if (uuid) {
-      if (currentUuid && currentUuid !== uuid) {
+      const alreadyAllowed = currentUuids.includes(uuid);
+      if (!alreadyAllowed && currentUuids.length >= maxDevices) {
         return sendJson(res, 403, { success: false, error: 'Device limit reached' });
       }
-      if (!currentUuid) {
+      if (!alreadyAllowed) {
+        currentUuids.push(uuid);
         await getSupabase()
           .from('subscriptions')
-          .update({ uuid })
+          .update({ uuid: currentUuids.join(',') })
           .eq('id', sub.id);
       }
     }

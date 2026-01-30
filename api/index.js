@@ -128,14 +128,24 @@ async function handleConnect(req, res, path, query) {
       return;
     }
 
-    const currentUuid = (sub.uuid || '').trim();
+    // Support max_devices: store multiple UUIDs comma-separated in subscriptions.uuid
+    const maxDevices = Math.max(1, parseInt(sub.max_devices, 10) || 1);
+    const currentUuids = (sub.uuid || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (uuid) {
-      if (currentUuid && currentUuid !== uuid) {
+      const alreadyAllowed = currentUuids.includes(uuid);
+      if (!alreadyAllowed && currentUuids.length >= maxDevices) {
         connectSendJson(res, 403, { success: false, error: 'Device limit reached' });
         return;
       }
-      if (!currentUuid) {
-        await getSupabase().from('subscriptions').update({ uuid }).eq('id', sub.id);
+      if (!alreadyAllowed) {
+        currentUuids.push(uuid);
+        await getSupabase()
+          .from('subscriptions')
+          .update({ uuid: currentUuids.join(',') })
+          .eq('id', sub.id);
       }
     }
 
