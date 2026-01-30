@@ -1,38 +1,57 @@
-import { getSupabase } from '../db/supabase.js';
-import bcrypt from 'bcryptjs';
+/**
+ * Sellers: verify (login), get by id, update, getAll, create.
+ */
 
-export async function getSellerBySlug(slug) {
-  const { data } = await getSupabase().from('sellers').select('*').eq('slug', slug).eq('suspended', 0).maybeSingle();
-  return data;
+import bcrypt from 'bcryptjs';
+import { getSupabase } from '../db/supabase.js';
+
+export async function verifySeller(username, password) {
+  if (!username || !password) return null;
+  const { data: seller, error } = await getSupabase()
+    .from('sellers')
+    .select('*')
+    .eq('username', String(username).trim())
+    .eq('suspended', 0)
+    .maybeSingle();
+  if (error || !seller) return null;
+  const ok = await bcrypt.compare(String(password), seller.password_hash || '');
+  return ok ? seller : null;
 }
 
 export async function getSellerById(id) {
-  const { data } = await getSupabase().from('sellers').select('*').eq('id', id).maybeSingle();
+  const { data, error } = await getSupabase()
+    .from('sellers')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
   return data;
 }
 
 export async function updateSeller(id, updates) {
-  const { data, error } = await getSupabase().from('sellers').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+  const payload = { ...updates, updated_at: new Date().toISOString() };
+  const { error } = await getSupabase()
+    .from('sellers')
+    .update(payload)
+    .eq('id', id);
   if (error) throw error;
-  return data;
 }
 
-export async function getAllSellers(includeSuspended = false) {
-  let q = getSupabase().from('sellers').select('*').order('id');
-  if (!includeSuspended) q = q.eq('suspended', 0);
-  const { data, error } = await q;
+export async function getAllSellers() {
+  const { data, error } = await getSupabase()
+    .from('sellers')
+    .select('*')
+    .order('id', { ascending: true });
   if (error) throw error;
   return data || [];
 }
 
 export async function createSeller(row) {
-  const { data, error } = await getSupabase().from('sellers').insert(row).select().single();
+  const { data, error } = await getSupabase()
+    .from('sellers')
+    .insert(row)
+    .select('id, slug, username')
+    .single();
   if (error) throw error;
   return data;
-}
-
-export async function verifySeller(username, password) {
-  const { data: seller } = await getSupabase().from('sellers').select('*').eq('username', username).eq('suspended', 0).maybeSingle();
-  if (!seller || !bcrypt.compareSync(password, seller.password_hash)) return null;
-  return seller;
 }

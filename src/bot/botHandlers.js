@@ -202,7 +202,7 @@ export function registerBotHandlers(bot, sellerId) {
     );
     await addLedgerEntry(sellerId, -creditsToDeduct, `Subscription for user ${pr.user_id}`, null);
     await getSupabase().from('sellers').update({ credits_balance: (seller.credits_balance || 0) - creditsToDeduct, updated_at: new Date().toISOString() }).eq('id', sellerId);
-    await updatePaymentRequest(prId, { status: 'accepted' });
+    await updatePaymentRequest(prId, { status: 'accepted', accepted_at: new Date().toISOString() });
 
     const userRow = await getSupabase().from('users').select('*').eq('id', pr.user_id).single().then((r) => r.data);
     const telegramUserId = userRow?.telegram_user_id;

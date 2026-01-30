@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS sellers (
   private_group_chat_id TEXT,
   payment_qr_file_id TEXT,
   seller_telegram_chat_id TEXT,
+  cycle_started_at TIMESTAMPTZ,
   maintenance_mode INTEGER DEFAULT 0,
   suspended INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -87,6 +88,7 @@ CREATE TABLE IF NOT EXISTS payment_requests (
   utr TEXT,
   screenshot_file_id TEXT,
   status TEXT DEFAULT 'pending',
+  accepted_at TIMESTAMPTZ,
   attempts INTEGER DEFAULT 0,
   success_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()

@@ -87,6 +87,7 @@ router.post('/', requireSeller, async (req, res) => {
   }
   if (action === 'reset') {
     await getSupabase().from('subscriptions').delete().eq('seller_id', req.session.sellerId);
+    await updateSeller(req.session.sellerId, { cycle_started_at: new Date().toISOString() });
     return res.redirect(303, panelSellerUrl(req, '/panel/seller', 'reset=done'));
   }
   return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
@@ -248,6 +249,7 @@ router.post('/maintenance', requireSeller, async (req, res) => {
 router.post('/reset', requireSeller, async (req, res) => {
   const sellerId = req.session.sellerId;
   await getSupabase().from('subscriptions').delete().eq('seller_id', sellerId);
+  await updateSeller(sellerId, { cycle_started_at: new Date().toISOString() });
   res.redirect('/panel/seller?reset=done');
 });
 
