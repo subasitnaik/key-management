@@ -4,7 +4,7 @@
 
 import { Telegraf, Markup } from 'telegraf';
 import { getPlansBySeller } from '../repositories/planRepo.js';
-import { getSellerById } from '../repositories/sellerRepo.js';
+import { getSellerById, updateSeller } from '../repositories/sellerRepo.js';
 import { findOrCreateUserByTelegram, getUserByTelegramId } from '../repositories/userRepo.js';
 import { createPaymentRequest, getPaymentRequestById, updatePaymentRequest } from '../repositories/paymentRequestRepo.js';
 import { isBlocked, blockUser } from '../repositories/blockedUserRepo.js';
@@ -22,8 +22,31 @@ function addDays(date, days) {
   return d;
 }
 
+function normalizeUsername(u) {
+  return (u || '').toLowerCase().replace(/^@/, '').trim();
+}
+
+function isSellerTelegramUser(seller, from) {
+  if (!seller?.telegram_username) return false;
+  const sellerU = normalizeUsername(seller.telegram_username);
+  const fromU = normalizeUsername(from?.username);
+  if (fromU && sellerU === fromU) return true;
+  if (from?.id && seller.seller_telegram_chat_id && String(from.id) === String(seller.seller_telegram_chat_id)) return true;
+  return false;
+}
+
 export function registerBotHandlers(bot, sellerId) {
   bot.start(async (ctx) => {
+    const seller = await getSellerById(sellerId);
+    if (!seller) return ctx.reply('Seller not configured.');
+
+    if (isSellerTelegramUser(seller, ctx.from)) {
+      await updateSeller(sellerId, { seller_telegram_chat_id: String(ctx.chat.id) });
+      return ctx.reply(
+        "You're the seller. Send a photo to set or change the payment QR code. Users will see this image when they choose a plan."
+      );
+    }
+
     const plans = await getPlansBySeller(sellerId);
     if (!plans?.length) {
       return ctx.reply('No plans available. Contact the seller.');
@@ -37,15 +60,40 @@ export function registerBotHandlers(bot, sellerId) {
     const plan = await getSupabase().from('plans').select('*').eq('id', planId).eq('seller_id', sellerId).single().then((r) => r.data);
     if (!plan) return ctx.answerCbQuery('Invalid plan');
     const seller = await getSellerById(sellerId);
-    await ctx.reply(
-      `Plan: ${plan.name} - ₹${plan.price}\n\nSend payment screenshot with UTR number as caption. Pay to seller and wait for approval.`
-    );
+    const caption = `Plan: ${plan.name} - ₹${plan.price}\n\nPay using the QR above, then send your payment screenshot with UTR number in the caption. Wait for approval.`;
+    if (seller?.payment_qr_file_id?.trim()) {
+      try {
+        await ctx.replyWithPhoto(seller.payment_qr_file_id.trim(), { caption });
+      } catch (e) {
+        console.error('replyWithPhoto failed:', e?.message || e);
+        await ctx.reply(`Plan: ${plan.name} - ₹${plan.price}\n\nSend payment screenshot with UTR number as caption. Pay to seller and wait for approval.`);
+      }
+    } else {
+      await ctx.reply(
+        `Plan: ${plan.name} - ₹${plan.price}\n\nSend payment screenshot with UTR number as caption. Pay to seller and wait for approval.`
+      );
+    }
     ctx.session = ctx.session || {};
     ctx.session.selectedPlanId = planId;
     await ctx.answerCbQuery();
   });
 
   bot.on('photo', async (ctx) => {
+    const seller = await getSellerById(sellerId);
+    if (!seller) return ctx.reply('Seller not configured.');
+
+    if (isSellerTelegramUser(seller, ctx.from)) {
+      const fileId = ctx.message.photo?.[ctx.message.photo.length - 1]?.file_id;
+      if (!fileId) return ctx.reply('Could not get image. Try again.');
+      try {
+        await updateSeller(sellerId, { payment_qr_file_id: fileId });
+        return ctx.reply('Payment QR updated. Users will see this image when they choose a plan.');
+      } catch (e) {
+        console.error('Update payment QR failed:', e?.message || e);
+        return ctx.reply('Failed to save. Try again.');
+      }
+    }
+
     const planId = ctx.session?.selectedPlanId;
     if (!planId) return ctx.reply('Please choose a plan first with /start');
     const caption = ctx.message.caption || '';
@@ -54,9 +102,6 @@ export function registerBotHandlers(bot, sellerId) {
     const from = ctx.from;
     const telegramUserId = String(from.id);
     const username = from.username ? `@${from.username}` : from.first_name || 'User';
-
-    const seller = await getSellerById(sellerId);
-    if (!seller) return ctx.reply('Seller not configured.');
 
     const user = await findOrCreateUserByTelegram(telegramUserId, username);
     const userId = user.id;
@@ -94,10 +139,14 @@ export function registerBotHandlers(bot, sellerId) {
       [Markup.button.callback('Accept', acceptData), Markup.button.callback('Reject', rejectData), Markup.button.callback('Block', blockData)],
     ]);
 
-    if (seller.telegram_username) {
+    const sellerChatId = seller.seller_telegram_chat_id
+      ? (Number(seller.seller_telegram_chat_id) || seller.seller_telegram_chat_id)
+      : seller.telegram_username
+        ? `@${seller.telegram_username.replace(/^@/, '')}`
+        : null;
+    if (sellerChatId) {
       try {
-        const target = seller.telegram_username.replace('@', '');
-        await ctx.telegram.sendMessage(target, text, keyboard);
+        await ctx.telegram.sendMessage(sellerChatId, text, keyboard);
       } catch (e) {
         console.error('Notify seller failed:', e);
       }

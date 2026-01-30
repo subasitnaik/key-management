@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS sellers (
   query_group_chat_id TEXT,
   private_group_link TEXT,
   private_group_chat_id TEXT,
+  payment_qr_file_id TEXT,
+  seller_telegram_chat_id TEXT,
   maintenance_mode INTEGER DEFAULT 0,
   suspended INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
