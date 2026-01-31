@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit Key</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="header">
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true">
+    <label for="nav-toggle" class="hamburger" aria-label="Open menu"><span></span></label>
+    <a href="/panel/seller/logout" class="header-logout">Logout</a>
+    <nav class="nav-menu">
+      <a href="/panel/seller">Dashboard</a>
+      <a href="/panel/seller/keys">Keys</a>
+      <a href="/panel/seller/plans">Plans</a>
+      <a href="/panel/seller/payments">Payments</a>
+    </nav>
+    <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
+  </header>
+  <div class="page">
+    <h1>Edit Key</h1>
+    <p><a href="/panel/seller/keys" class="btn btn-secondary">Back to Keys</a></p>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="card error-msg">Could not update key.</div>
+    <% } %>
+    <div class="card">
+      <form method="post" action="/panel/seller/keys/<%= sub.id %>/edit">
+        <div class="form-group">
+          <label>Key</label>
+          <code class="badge"><%= sub.key %></code>
+          <p class="text-dim">Key cannot be changed.</p>
+        </div>
+        <div class="form-group">
+          <label for="max_devices">Max devices</label>
+          <input type="number" id="max_devices" name="max_devices" value="<%= sub.max_devices ?? 1 %>" min="1" required />
+        </div>
+        <div class="form-group">
+          <label for="expires_at">Expires at</label>
+          <input type="datetime-local" id="expires_at" name="expires_at" value="<%= sub.expires_at ? new Date(sub.expires_at).toISOString().slice(0,16) : '' %>" />
+        </div>
+        <button type="submit" class="btn">Save</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

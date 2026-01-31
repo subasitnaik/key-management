@@ -1,98 +1,101 @@
+/**
+ * Subscription repository: keys/subscriptions for sellers.
+ */
+
 import { getSupabase } from '../db/supabase.js';
 
-/**
- * Validate key for /connect. Lazy expiry: check now, respect maintenance_paused_at.
- * Returns { status: 'ok'|'expired'|'maintenance'|'notfound' }.
- */
-export async function validateKeyForConnect(key, sellerId) {
-  const supabase = getSupabase();
-  let q = supabase.from('subscriptions').select('*').eq('key', key);
-  if (sellerId != null) q = q.eq('seller_id', sellerId);
-  const { data: sub, error } = await q.maybeSingle();
-  if (error) throw error;
-  if (!sub) return { status: 'notfound' };
-
-  const { data: seller } = await supabase.from('sellers').select('maintenance_mode, suspended').eq('id', sub.seller_id).maybeSingle();
-  if (seller?.suspended) return { status: 'notfound' };
-
-  let expiresAt = sub.expires_at ? new Date(sub.expires_at) : null;
-  if (sub.maintenance_paused_at && seller?.maintenance_mode) {
-    const pausedAt = new Date(sub.maintenance_paused_at);
-    const pauseDurationMs = Date.now() - pausedAt.getTime();
-    expiresAt = expiresAt ? new Date(expiresAt.getTime() + pauseDurationMs) : null;
-  }
-
-  if (expiresAt && expiresAt.getTime() <= Date.now()) return { status: 'expired' };
-  if (seller?.maintenance_mode) return { status: 'maintenance' };
-  return { status: 'ok' };
-}
-
-export async function getSubscriptionByKey(key, sellerId) {
-  const supabase = getSupabase();
-  let q = supabase.from('subscriptions').select('*').eq('key', key);
-  if (sellerId != null) q = q.eq('seller_id', sellerId);
-  const { data } = await q.maybeSingle();
-  return data;
-}
-
-/** Returns active subscription for user+seller if not expired and seller not suspended. */
-export async function getActiveSubscriptionForUserAndSeller(userId, sellerId) {
-  const supabase = getSupabase();
-  const now = new Date().toISOString();
-  const { data: sub } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('seller_id', sellerId)
-    .gt('expires_at', now)
-    .maybeSingle();
-  if (!sub) return null;
-  const { data: seller } = await supabase.from('sellers').select('suspended').eq('id', sellerId).maybeSingle();
-  if (seller?.suspended) return null;
-  return sub;
-}
-
 export async function getSubscriptionsBySeller(sellerId) {
-  const { data, error } = await getSupabase().from('subscriptions').select('*').eq('seller_id', sellerId).order('created_at', { ascending: false });
-  if (error) throw error;
+  if (!sellerId) return [];
+  const { data, error } = await getSupabase()
+    .from('subscriptions')
+    .select('id, key, uuid, max_devices, expires_at, maintenance_paused_at, created_at')
+    .eq('seller_id', parseInt(sellerId, 10))
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('getSubscriptionsBySeller error:', error);
+    return [];
+  }
   return data || [];
 }
 
-/** Count active subscriptions (not expired) for this seller, excluding manually generated keys (placeholder users). */
 export async function getActiveSubscriptionsCount(sellerId) {
-  const supabase = getSupabase();
+  if (!sellerId) return 0;
   const now = new Date().toISOString();
-  const { data: subs, error } = await supabase
+  const { count, error } = await getSupabase()
     .from('subscriptions')
-    .select('user_id')
-    .eq('seller_id', sellerId)
+    .select('id', { count: 'exact', head: true })
+    .eq('seller_id', parseInt(sellerId, 10))
     .gt('expires_at', now);
-  if (error) throw error;
-  if (!subs?.length) return 0;
-  const userIds = [...new Set(subs.map((s) => s.user_id))];
-  const { data: users, error: usersError } = await supabase
-    .from('users')
-    .select('id')
-    .in('id', userIds)
-    .not('telegram_user_id', 'like', 'manual_%');
-  if (usersError) throw usersError;
-  const realUserIds = new Set((users || []).map((u) => u.id));
-  return subs.filter((s) => realUserIds.has(s.user_id)).length;
+  if (error) {
+    console.error('getActiveSubscriptionsCount error:', error);
+    return 0;
+  }
+  return count ?? 0;
 }
 
-export async function createSubscription(row) {
-  const { data, error } = await getSupabase().from('subscriptions').insert(row).select().single();
-  if (error) throw error;
-  return data;
-}
-
-export async function updateSubscription(id, updates) {
-  const { data, error } = await getSupabase().from('subscriptions').update(updates).eq('id', id).select().single();
+export async function createSubscription({ user_id, seller_id, key, max_devices, expires_at }) {
+  const { data, error } = await getSupabase()
+    .from('subscriptions')
+    .insert({
+      user_id,
+      seller_id: parseInt(seller_id, 10),
+      key: String(key).trim(),
+      max_devices: Math.max(1, parseInt(max_devices, 10) || 1),
+      expires_at: expires_at || new Date(Date.now() + 86400000).toISOString(),
+    })
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteSubscription(id, sellerId) {
-  const { error } = await getSupabase().from('subscriptions').delete().eq('id', id).eq('seller_id', sellerId);
+  const { error } = await getSupabase()
+    .from('subscriptions')
+    .delete()
+    .eq('id', parseInt(id, 10))
+    .eq('seller_id', parseInt(sellerId, 10));
   if (error) throw error;
+}
+
+export async function resetSubscriptionDevices(id, sellerId) {
+  const { data, error } = await getSupabase()
+    .from('subscriptions')
+    .update({ uuid: '' })
+    .eq('id', parseInt(id, 10))
+    .eq('seller_id', parseInt(sellerId, 10))
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateSubscription(id, sellerId, updates) {
+  const allowed = ['max_devices', 'expires_at'];
+  const safe = {};
+  for (const k of allowed) {
+    if (updates[k] !== undefined) safe[k] = updates[k];
+  }
+  if (Object.keys(safe).length === 0) return null;
+  const { data, error } = await getSupabase()
+    .from('subscriptions')
+    .update(safe)
+    .eq('id', parseInt(id, 10))
+    .eq('seller_id', parseInt(sellerId, 10))
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteExpiredBySeller(sellerId) {
+  const now = new Date().toISOString();
+  const { data, error } = await getSupabase()
+    .from('subscriptions')
+    .delete()
+    .eq('seller_id', parseInt(sellerId, 10))
+    .lt('expires_at', now)
+    .select('id');
+  if (error) throw error;
+  return (data || []).length;
 }
