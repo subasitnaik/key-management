@@ -57,19 +57,17 @@ No manual webhook call is needed if `PANEL_URL` is set and the seller has a bot 
 
 ---
 
-## 4. Seller: start the bot once (required for payment notifications)
+## 4. Seller: start the bot once (required for DMs)
 
-1. In Telegram, the **seller** (the account whose @username is set in the panel) must search for **your bot** and tap **Start** (or send `/start`).
-2. The bot will show: *"You're the seller. Send a photo to set or change the payment QR code."* — it does **not** show plans to the seller.
-3. The seller can send a **photo** (payment QR image) at any time; the bot saves it and uses it when **other users** choose a plan.
-4. The bot stores the seller’s chat ID when they `/start`, so payment requests are sent **reliably** to that chat (Accept/Reject/Block buttons). Without the seller starting the bot, payment screenshots from users would not reach the seller.
+1. In Telegram, search for **your bot** by its username (e.g. `@mychannel_paid_bot`).
+2. Tap **Start** (or send `/start`).
+3. This opens a chat with the bot so it can later send payment notifications and inline buttons (Accept/Reject/Block) to the seller’s Telegram username.
+
+Without this, the bot may not be able to send messages to the seller.
 
 ---
 
 ## 5. User flow (how the bot is used)
-
-- **Seller** (Telegram username set in panel): `/start` → sees “Send a photo to set or change payment QR” → can send a photo to set/change the QR. No plans shown.
-- **Other users**: `/start` → see plans → choose plan → see payment QR (if seller set one) and instructions → send payment screenshot with UTR → seller gets the request in their bot chat with Accept/Reject/Block.
 
 1. **User** finds your bot (e.g. from your channel or link).
 2. User sends **`/start`** to the bot.
@@ -104,18 +102,28 @@ No extra config is needed in the panel beyond the bot token, seller’s Telegram
 
 ---
 
-## 7. Checklist
+## 7. (Optional) Auto-kick expired users from the private group
+
+A **Vercel Cron** job runs every 6 hours to remove users whose subscription has expired from the private group. For this to work:
+
+1. The bot must be **admin** of the group with **"Ban users"** permission (needed to kick).
+2. The bot learns the group's chat ID automatically when it approves a join request (section 6).
+3. Set **`CRON_SECRET`** in Vercel Environment Variables if you want to manually trigger `/cron` (e.g. for testing). Vercel's cron invocations are allowed by default.
+
+---
+
+## 8. Checklist
 
 - [ ] Bot created with @BotFather; token copied.
 - [ ] `PANEL_URL` set in Vercel (or your host) to the exact HTTPS URL, no trailing slash.
 - [ ] Seller created/edited with **Telegram bot token** and **Telegram username** (seller’s @username).
-- [ ] **Seller** has **started the bot** in Telegram (so the bot can send payment requests to them and seller can set payment QR).
+- [ ] Seller (or you) has **started the bot** in Telegram at least once.
 - [ ] Seller has **at least one plan** (Plans in seller panel) so `/start` shows plans.
 - [ ] (Optional) Private group created; bot added as admin with “Approve invite requests”; link set in **Private group link**.
 
 ---
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Problem | What to check |
 |--------|----------------|
@@ -127,7 +135,7 @@ No extra config is needed in the panel beyond the bot token, seller’s Telegram
 
 ---
 
-## 9. Webhook details (for debugging)
+## 10. Webhook details (for debugging)
 
 - Webhook URL format: `https://<PANEL_URL>/api/telegram/webhook/<seller_id>`  
   Example: `https://key-management-five.vercel.app/api/telegram/webhook/1`
@@ -135,3 +143,11 @@ No extra config is needed in the panel beyond the bot token, seller’s Telegram
 - Updates received: `message`, `callback_query`, `chat_join_request` (so /start, photos, button clicks, and join requests are handled).
 
 If you need to re-set the webhook (e.g. after changing domain), edit the seller, change the token or re-paste the same token, and save again.
+
+---
+
+## Cron job (auto-kick expired users)
+
+- Endpoint: `GET /cron` (or `GET /api/cron`)
+- Schedule: every 6 hours (0:00, 6:00, 12:00, 18:00 UTC)
+- Vercel sends requests with `User-Agent: vercel-cron/1.0`. Optionally set `CRON_SECRET` and use `Authorization: Bearer <CRON_SECRET>` for manual runs.

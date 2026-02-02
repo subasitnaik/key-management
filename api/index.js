@@ -1,10 +1,11 @@
 /**
  * Vercel serverless entry: all requests rewritten here. Path in ?path= for Express.
  * For POST /connect/* we handle here: read body once, run connect logic, return JSON (never pass to Express so stream isn't read twice).
+ * GET /cron: Vercel Cron kicks expired users from private groups.
  */
 import { createApp } from '../app.js';
 import { parse } from 'url';
-import { getSellerBySlug } from '../src/repositories/sellerRepo.js';
+import { getSellerBySlug, getSellerById } from '../src/repositories/sellerRepo.js';
 import { getSupabase } from '../src/db/supabase.js';
 
 process.on('unhandledRejection', (r, p) => console.error('Unhandled Rejection at', p, r));
@@ -61,6 +62,51 @@ function connectSendJson(res, status, body) {
   const raw = JSON.stringify(body);
   res.setHeader('Content-Length', Buffer.byteLength(raw, 'utf8'));
   res.status(status).end(raw);
+}
+
+/** Kick expired users from private groups. Called by Vercel Cron. */
+async function handleCron(req, res) {
+  const isVercelCron = (req.headers?.['user-agent'] || '').includes('vercel-cron');
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers?.['authorization'] || '';
+  const hasValidSecret = secret && auth === `Bearer ${secret}`;
+  if (!isVercelCron && !hasValidSecret) {
+    res.status(401).end('Unauthorized');
+    return;
+  }
+  const now = new Date().toISOString();
+  const { data: expired } = await getSupabase()
+    .from('subscriptions')
+    .select('id, user_id, seller_id')
+    .lt('expires_at', now)
+    .eq('expiry_kicked', 0);
+  if (!expired?.length) {
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).end(JSON.stringify({ ok: true, kicked: 0 }));
+    return;
+  }
+  let kicked = 0;
+  for (const sub of expired) {
+    const { data: user } = await getSupabase().from('users').select('telegram_user_id').eq('id', sub.user_id).single();
+    const telegramId = user?.telegram_user_id;
+    if (!telegramId || String(telegramId).startsWith('manual_')) continue;
+    const seller = await getSellerById(sub.seller_id);
+    if (!seller?.telegram_bot_token || !seller?.private_group_chat_id) continue;
+    try {
+      const chatId = seller.private_group_chat_id;
+      const userId = parseInt(telegramId, 10);
+      if (Number.isNaN(userId)) continue;
+      const url = `https://api.telegram.org/bot${seller.telegram_bot_token}/banChatMember?chat_id=${chatId}&user_id=${userId}`;
+      const r = await fetch(url);
+      const json = await r.json();
+      if (json.ok) kicked++;
+    } catch (e) {
+      console.error('Cron kick failed for sub', sub.id, e?.message || e);
+    }
+    await getSupabase().from('subscriptions').update({ expiry_kicked: 1 }).eq('id', sub.id);
+  }
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).end(JSON.stringify({ ok: true, kicked }));
 }
 
 async function handleConnect(req, res, path, query) {
@@ -184,6 +230,9 @@ export default async function handler(req, res) {
   const pathParam = query.path ?? parsed.query?.path;
   const path = pathParam ? '/' + String(pathParam).replace(/^\/+/, '') : '/';
 
+  if (req.method === 'GET' && (path === '/cron' || path === '/api/cron')) {
+    return handleCron(req, res);
+  }
   if (req.method === 'POST' && path.startsWith('/connect')) {
     return handleConnect(req, res, path, query);
   }
