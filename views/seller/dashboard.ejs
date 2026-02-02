@@ -15,7 +15,7 @@
       <a href="/panel/seller">Dashboard</a>
       <a href="/panel/seller/keys">Keys</a>
       <a href="/panel/seller/plans">Plans</a>
-      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/blocked">Blocked</a>
     </nav>
     <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
   </header>
@@ -92,24 +92,6 @@
         }
       })();
     </script>
-    <% if (typeof settingsSaved !== 'undefined' && settingsSaved) { %>
-    <div class="card success-msg">Settings saved.</div>
-    <% } %>
-    <div class="card">
-      <h3>Panel settings (Free Source compatible)</h3>
-      <form method="post" action="/panel/seller" class="settings-form">
-        <input type="hidden" name="_action" value="settings" />
-        <div class="form-group">
-          <label for="mod_name">Mod name</label>
-          <input type="text" id="mod_name" name="mod_name" value="<%= typeof modName !== 'undefined' ? (modName || '') : '' %>" placeholder="e.g. VIP MOD" />
-        </div>
-        <div class="form-group">
-          <label for="maintenance_message">Maintenance message (shown when maintenance is on)</label>
-          <input type="text" id="maintenance_message" name="maintenance_message" value="<%= typeof maintenanceMessage !== 'undefined' ? (maintenanceMessage || '') : '' %>" placeholder="e.g. Under maintenance, try again later" />
-        </div>
-        <button type="submit" class="btn">Save settings</button>
-      </form>
-    </div>
     <div class="card">
       <div class="maintenance-row">
         <span class="maintenance-label">Maintenance mode</span>

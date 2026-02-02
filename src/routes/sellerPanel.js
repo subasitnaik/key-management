@@ -1,5 +1,5 @@
 /**
- * Seller panel: login, dashboard, keys, plans, payments, maintenance, reset.
+ * Seller panel: login, dashboard, keys, plans, blocked, maintenance, reset.
  */
 
 import { Router } from 'express';
@@ -7,9 +7,10 @@ import { requireSeller } from '../middleware/auth.js';
 import { verifySeller, getSellerById, updateSeller } from '../repositories/sellerRepo.js';
 import { getSubscriptionsBySeller, getActiveSubscriptionsCount } from '../repositories/subscriptionRepo.js';
 import { getPlansBySeller, getPlanById, createPlan, updatePlan, deletePlan } from '../repositories/planRepo.js';
-import { getPendingBySeller, getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
+import { getEarnedAmountBySeller } from '../repositories/paymentRequestRepo.js';
+import sellerBlockedRouter from './sellerBlocked.js';
 import { getLedgerBySeller } from '../repositories/creditLedgerRepo.js';
-import { createSubscription, deleteSubscription, resetSubscriptionDevices, updateSubscription, deleteExpiredBySeller } from '../repositories/subscriptionRepo.js';
+import { createSubscription, deleteSubscription } from '../repositories/subscriptionRepo.js';
 import { findOrCreateUserByTelegram } from '../repositories/userRepo.js';
 import { getSupabase } from '../db/supabase.js';
 
@@ -50,7 +51,6 @@ router.get('/', requireSeller, async (req, res) => {
   }
   const connectLink = baseUrl && seller?.slug ? `${baseUrl}/connect/${seller.slug}` : '';
   const usedPanelUrl = !!(process.env.PANEL_URL || '').trim() && /^https?:\/\//i.test((process.env.PANEL_URL || '').trim());
-  const settingsSaved = req.query.settings === 'saved';
   res.render('seller/dashboard', {
     creditsBalance: seller?.credits_balance ?? 0,
     activeUsers: activeUsers ?? 0,
@@ -60,9 +60,6 @@ router.get('/', requireSeller, async (req, res) => {
     slug: seller?.slug || '',
     usedPanelUrl,
     maintenanceMode: !!(seller?.maintenance_mode),
-    maintenanceMessage: seller?.maintenance_message || '',
-    modName: seller?.mod_name || '',
-    settingsSaved,
   });
 });
 
@@ -88,14 +85,13 @@ router.post('/', requireSeller, async (req, res) => {
     await updateSeller(req.session.sellerId, { maintenance_mode: next });
     return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
   }
-  if (action === 'settings') {
-    const modName = (req.body.mod_name || '').toString().trim();
-    const maintenanceMessage = (req.body.maintenance_message || '').toString().trim();
-    await updateSeller(req.session.sellerId, { mod_name: modName || undefined, maintenance_message: maintenanceMessage || undefined });
-    return res.redirect(303, panelSellerUrl(req, '/panel/seller', 'settings=saved'));
-  }
   if (action === 'reset') {
     await getSupabase().from('subscriptions').delete().eq('seller_id', req.session.sellerId);
+    try {
+      await updateSeller(req.session.sellerId, { cycle_started_at: new Date().toISOString() });
+    } catch (_) {
+      // cycle_started_at column may not exist yet (migration not run)
+    }
     return res.redirect(303, panelSellerUrl(req, '/panel/seller', 'reset=done'));
   }
   return res.redirect(303, panelSellerUrl(req, '/panel/seller'));
@@ -126,9 +122,6 @@ router.get('/keys', requireSeller, async (req, res) => {
     generated: req.query.generated === '1',
     generatedKey: req.query.key ? decodeURIComponent(req.query.key) : undefined,
     deleted: req.query.deleted === '1',
-    reset: req.query.reset === '1',
-    updated: req.query.updated === '1',
-    expired: req.query.expired !== undefined ? req.query.expired : false,
     error: req.query.error,
   });
 });
@@ -182,60 +175,6 @@ router.post('/keys/:id/delete', requireSeller, async (req, res) => {
   } catch (err) {
     console.error('Delete key failed:', err?.message || err);
     return res.redirect(303, '/panel/seller/keys?error=delete');
-  }
-});
-
-router.post('/keys/:id/reset-devices', requireSeller, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const sellerId = req.session.sellerId;
-  try {
-    await resetSubscriptionDevices(id, sellerId);
-    return res.redirect(303, '/panel/seller/keys?reset=1');
-  } catch (err) {
-    console.error('Reset devices failed:', err?.message || err);
-    return res.redirect(303, '/panel/seller/keys?error=reset');
-  }
-});
-
-router.get('/keys/:id/edit', requireSeller, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const sellerId = req.session.sellerId;
-  const { data: sub } = await getSupabase()
-    .from('subscriptions')
-    .select('id, key, max_devices, expires_at')
-    .eq('id', id)
-    .eq('seller_id', sellerId)
-    .maybeSingle();
-  if (!sub) return res.redirect(303, '/panel/seller/keys?error=notfound');
-  res.render('seller/key-edit', { sub, error: req.query.error });
-});
-
-router.post('/keys/:id/edit', requireSeller, async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const sellerId = req.session.sellerId;
-  const { max_devices, expires_at } = req.body || {};
-  try {
-    const updates = {};
-    if (max_devices !== undefined) updates.max_devices = Math.max(1, parseInt(max_devices, 10) || 1);
-    if (expires_at !== undefined && expires_at !== '') updates.expires_at = new Date(expires_at).toISOString();
-    if (Object.keys(updates).length > 0) {
-      await updateSubscription(id, sellerId, updates);
-    }
-    return res.redirect(303, '/panel/seller/keys?updated=1');
-  } catch (err) {
-    console.error('Edit key failed:', err?.message || err);
-    return res.redirect(303, '/panel/seller/keys/' + id + '/edit?error=edit');
-  }
-});
-
-router.post('/keys/delete-expired', requireSeller, async (req, res) => {
-  const sellerId = req.session.sellerId;
-  try {
-    const count = await deleteExpiredBySeller(sellerId);
-    return res.redirect(303, '/panel/seller/keys?expired=' + count);
-  } catch (err) {
-    console.error('Delete expired failed:', err?.message || err);
-    return res.redirect(303, '/panel/seller/keys?error=expired');
   }
 });
 
@@ -299,10 +238,7 @@ router.post('/plans/:id/delete', requireSeller, async (req, res) => {
   return res.redirect(303, '/panel/seller/plans?deleted=1');
 });
 
-router.get('/payments', requireSeller, async (req, res) => {
-  const pending = await getPendingBySeller(req.session.sellerId);
-  res.render('seller/payments', { pending: pending || [] });
-});
+router.use(sellerBlockedRouter);
 
 router.post('/maintenance', requireSeller, async (req, res) => {
   const seller = await getSellerById(req.session.sellerId);
@@ -317,6 +253,11 @@ router.post('/maintenance', requireSeller, async (req, res) => {
 router.post('/reset', requireSeller, async (req, res) => {
   const sellerId = req.session.sellerId;
   await getSupabase().from('subscriptions').delete().eq('seller_id', sellerId);
+  try {
+    await updateSeller(sellerId, { cycle_started_at: new Date().toISOString() });
+  } catch (_) {
+    // cycle_started_at column may not exist yet (migration not run)
+  }
   res.redirect('/panel/seller?reset=done');
 });
 

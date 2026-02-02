@@ -15,19 +15,13 @@
       <a href="/panel/seller">Dashboard</a>
       <a href="/panel/seller/keys">Keys</a>
       <a href="/panel/seller/plans">Plans</a>
-      <a href="/panel/seller/payments">Payments</a>
+      <a href="/panel/seller/blocked">Blocked</a>
     </nav>
     <label for="nav-toggle" class="nav-backdrop" aria-label="Close menu"></label>
   </header>
   <div class="page">
     <h1>Keys / Subscriptions</h1>
-    <p>
-      <a href="/panel/seller" class="btn btn-secondary">Back</a>
-      <a href="/panel/seller/keys/generate" class="btn">Generate key</a>
-      <form method="post" action="/panel/seller/keys/delete-expired" style="display:inline;" onsubmit="return confirm('Delete all expired keys?');">
-        <button type="submit" class="btn btn-danger">Delete expired</button>
-      </form>
-    </p>
+    <p><a href="/panel/seller" class="btn btn-secondary">Back</a> <a href="/panel/seller/keys/generate" class="btn">Generate key</a></p>
     <% if (typeof generated !== 'undefined' && generated) { %>
     <div class="card success-msg">
       Key generated.<% if (typeof generatedKey !== 'undefined' && generatedKey) { %> <strong>Key:</strong> <code class="badge"><%= generatedKey %></code> — copy and share with the user.<% } %>
@@ -36,34 +30,15 @@
     <% if (typeof deleted !== 'undefined' && deleted) { %>
     <div class="card success-msg">Key deleted.</div>
     <% } %>
-    <% if (typeof reset !== 'undefined' && reset) { %>
-    <div class="card success-msg">Devices reset. Key can be used on new devices.</div>
-    <% } %>
-    <% if (typeof updated !== 'undefined' && updated) { %>
-    <div class="card success-msg">Key updated.</div>
-    <% } %>
-    <% if (typeof expired !== 'undefined' && expired !== false) { %>
-    <div class="card success-msg">Deleted <%= expired %> expired key(s).</div>
-    <% } %>
     <% if (typeof error !== 'undefined' && error === 'delete') { %>
     <div class="card error-msg">Could not delete key. It may not belong to you.</div>
-    <% } %>
-    <% if (typeof error !== 'undefined' && error === 'reset') { %>
-    <div class="card error-msg">Could not reset devices.</div>
-    <% } %>
-    <% if (typeof error !== 'undefined' && error === 'expired') { %>
-    <div class="card error-msg">Could not delete expired keys.</div>
     <% } %>
     <div class="card">
       <ul class="list seller-list">
         <% (subscriptions || []).forEach(function(s) { %>
         <li class="seller-row">
-          <span>Key: <code class="badge"><%= s.key %></code> — max devices: <%= s.max_devices ?? 1 %> — expires <%= s.expires_at %></span>
+          <span>Key: <code class="badge"><%= s.key %></code> — max devices: <%= s.max_devices ?? 1 %> — expires <%= s.expires_at ? new Date(s.expires_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'short' }) : '—' %></span>
           <span class="row-actions">
-            <a href="/panel/seller/keys/<%= s.id %>/edit" class="btn btn-small btn-secondary">Edit</a>
-            <form method="post" action="/panel/seller/keys/<%= s.id %>/reset-devices" style="display:inline;" onsubmit="return confirm('Reset devices? User can use key on new devices.');">
-              <button type="submit" class="btn btn-small">Reset devices</button>
-            </form>
             <form method="post" action="/panel/seller/keys/<%= s.id %>/delete" style="display:inline;" onsubmit="return confirm('Delete this key? The user will no longer have access.');">
               <button type="submit" class="btn btn-small btn-danger">Delete</button>
             </form>
